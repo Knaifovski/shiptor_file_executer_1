@@ -18,7 +18,8 @@ shiptor = Standby_Shiptor_database(host= settings.shiptor_standby_base_host,
                                         password=settings.password)
 
 FILEFOLDER = 'temp/'
-FILENAME_FIRST = FILEFOLDER+'1 ShiptorData.xlsx'
+FILENAME_FIRST = FILEFOLDER+'ShiptorData.xlsx'
+FILERESULT = FILEFOLDER + 'RESULT.xlsx'
 
 
 def home(request):
@@ -30,18 +31,21 @@ def home(request):
                 logger.debug(f"обработка входного файла - {request.FILES['input']}")
                 s = request.FILES['input']
                 logger.debug(f"{s}, {type(s)}")
-                packages = file_handle.get_data_from_file(s.temporary_file_path())
+                packages = file_handle.get_packages_from_file(s.temporary_file_path())
                 df = shiptor.get_packages(packages)
                 pd.DataFrame(df).to_excel(FILENAME_FIRST, header=True, index=False)
                 return FileResponse(open(FILENAME_FIRST, 'rb'), as_attachment=True,
                                     filename="1 ShiptorData.xlsx")
-            elif len(request.FILES) in (1,2,3,4): #сменить на 4
+            elif len(request.FILES) == 4: #сменить на 4
                 # files = []
                 # for file in request.FILES:
                 #     files.append({'name': file, 'path': file.temporary_file_path()})
                 request.FILES['input'] = FILENAME_FIRST
                 # file_handle.get_files_data(request.FILES)
-                file_handle.get_files_data(request.FILES)
+                result = file_handle.get_files_data(request.FILES)
+                pd.DataFrame(result).to_excel(FILERESULT, header=True, index=False)
+                return FileResponse(open(FILERESULT, 'rb'), as_attachment=True,
+                                    filename="RESULT.xlsx")
             else:
                 # Если функция не увидела файлов \ Если количество файлов != 4,1
                 logger.error(f"request.FILES error", request.FILES, request.POST)

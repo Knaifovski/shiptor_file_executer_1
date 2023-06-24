@@ -3,21 +3,20 @@ from django.utils.datastructures import MultiValueDict
 from loguru import logger
 
 
-def get_data_from_file(file) -> list:
-    # packages = []
+def get_packages_from_file(file) -> dict:
+    packages = []
     try:
         xl_file = pd.ExcelFile(file)
-        dfs = [xl_file.parse(sheet_name) for sheet_name in xl_file.sheet_names]
-        # dfs = {sheet_name: xl_file.parse(sheet_name)
-        #        for sheet_name in xl_file.sheet_names}
-        return dfs
+        dfs = {sheet_name: xl_file.parse(sheet_name) for sheet_name in xl_file.sheet_names}
+        for df in dfs.values():
+            packages = df['packages'].values.tolist()
+        return packages
     except:
-        return []
+        logger.error("UNEXPECTER ERRIR")
+        raise Exception("ERROR")
     # for df in dfs.values():
     #     packages = df['packages'].values.tolist()
     # print(dfs)
-    # for key in dfs.keys():
-    #     packages = dfs[key].values.tolist()
     # logger.debug(packages)
 
 def get_files_data(files: MultiValueDict):
