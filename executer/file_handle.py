@@ -14,10 +14,6 @@ def get_packages_from_file(file) -> dict:
     except:
         logger.error("UNEXPECTER ERRIR")
         raise Exception("ERROR")
-    # for df in dfs.values():
-    #     packages = df['packages'].values.tolist()
-    # print(dfs)
-    # logger.debug(packages)
 
 def get_files_data(files: MultiValueDict):
     PACKAGES_LIST: list
@@ -25,7 +21,6 @@ def get_files_data(files: MultiValueDict):
     result = pd.read_excel(input_file)
 
     del files['input']
-    print(files)
 
     for file in files.values():
         file_data = pd.read_excel(file.temporary_file_path())
