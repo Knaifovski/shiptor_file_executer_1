@@ -16,22 +16,17 @@
 </head>
 <body>
     <div class="center-block">
-        <div>
-            <label for="formFileLg" class="form-label">Файл с посылками</label>
-            <input class="form-control form-control-lg" id="formFileLg" type="file">
-        </div>
-        <div>
-            <label for="formFileLg" class="form-label">ОМ</label>
-            <input class="form-control form-control-lg" id="formFileLg" type="file">
-        </div>
-        <div>
-            <label for="formFileLg" class="form-label">ВП</label>
-            <input class="form-control form-control-lg" id="formFileLg" type="file">
-        </div>
-        <div>
-            <label for="formFileLg" class="form-label">ВПП</label>
-            <input class="form-control form-control-lg" id="formFileLg" type="file">
-        </div>
+        <form action="" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %} 
+                <!-- {{field}} -->
+                <label for="formFileLg" class="form-label">{{field.label}}</label>
+                <input class="form-control form-control-lg" id="id_{{field.name}}" name="{{field.name}}" type="file" enctype="multipart/form-data">
+            {% endfor %}
+            <button type="submit">Submit</button>
+        </form>
+        <hr>
+        
     </div>
 </body>
 {% block afterload %}

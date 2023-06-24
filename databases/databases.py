@@ -28,27 +28,37 @@ class Database_stock:
             logger.error(f'DB: {database}|ERROR| CONNECT TO DATABASE')
 
     def get(self, query):
-        try:
-            connection = psycopg2.connect(host=self.host, database=self.database,
-                                          user=self.user, password=self.password, connect_timeout=5)
-            with connection.cursor() as cursor:
-                cursor.execute(query)
-                logger.warning('DB: {}|GET|executed get transaction:\n {}'.format(self.database, query))
-                result = cursor.fetchall()
-                colnames = [desc[0] for desc in cursor.description]
-                dict_ = []
-                if result:
-                    for row in result:
-                        dict_.append(dict(zip(colnames, row)))
-                    logger.warning('DB: {}|GET|response data:\n{}'.format(self.database, dict_))
-                    return dict_
-            connection.close()
-        except OperationalError as e:
-            logger.error(f"DB: {self.database}|GET| Error: {e}")
-            return None
-        except TimeoutError:
-            logger.error(f"DB: {self.database}| TIMEOUT ERROR")
-            return None
+        TRYIES = 0
+        while TRYIES <= 5:
+            try:
+                connection = psycopg2.connect(host=self.host, database=self.database,
+                                              user=self.user, password=self.password, connect_timeout=5)
+                with connection.cursor() as cursor:
+                    cursor.execute(query)
+                    logger.warning('DB: {}|GET|executed get transaction:\n {}'.format(self.database, query))
+                    result = cursor.fetchall()
+                    colnames = [desc[0] for desc in cursor.description]
+                    dict_ = []
+                    if result:
+                        for row in result:
+                            dict_.append(dict(zip(colnames, row)))
+                        logger.warning('DB: {}|GET|response data:\n{}'.format(self.database, dict_))
+                        return dict_
+                    else:
+                        return []
+                connection.close()
+            except OperationalError as e:
+                logger.error(f"DB: {self.database}|GET| Error: {e}")
+                TRYIES +=1
+                # return None
+            except TimeoutError:
+                logger.error(f"DB: {self.database}| TIMEOUT ERROR")
+                TRYIES += 1
+                # return None
+            except Exception as e:
+                logger.error(f"DB {self.database}| Error = {e}")
+        return []
+
 
     def get_one(self, query):
         result = self.get(query)
