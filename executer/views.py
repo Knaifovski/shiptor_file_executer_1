@@ -37,11 +37,7 @@ def home(request):
                 return FileResponse(open(FILENAME_FIRST, 'rb'), as_attachment=True,
                                     filename="1 ShiptorData.xlsx")
             elif len(request.FILES) == 4: #сменить на 4
-                # files = []
-                # for file in request.FILES:
-                #     files.append({'name': file, 'path': file.temporary_file_path()})
                 request.FILES['input'] = FILENAME_FIRST
-                # file_handle.get_files_data(request.FILES)
                 result = file_handle.get_files_data(request.FILES)
                 pd.DataFrame(result).to_excel(FILERESULT, header=True, index=False)
                 return FileResponse(open(FILERESULT, 'rb'), as_attachment=True,
@@ -51,17 +47,6 @@ def home(request):
                 logger.error(f"request.FILES error", request.FILES, request.POST)
     else:
         form = UploadFileForm()
-    # packages = ["123570100000986978","123570100002480375","123570100002492765","123570100002642023","RP495127126",
-    #             "RP503994757","RP505866284","RP506929421","RP508099830","SBC0005416826"]
-    # print(shiptor.get_packages(packages))
-
-
-    # if request.method == "POST":
-    #     form = UploadFileForm(request.POST, request.FILES)
-    #     if form.is_valid():
-    #         logger.debug(request.FILES)
-    # else:
-    #     form = UploadFileForm()
     return render(request, template, {'form': form})
 
 def export_shiptor_data(request):
