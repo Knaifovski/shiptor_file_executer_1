@@ -6,11 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% block head %}
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'libs/bootstrap/bootstrap.min.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
     {% endblock %}
     <title>Document</title>
 </head>
@@ -23,7 +23,7 @@
                 <label for="formFileLg" class="form-label">{{field.label}}</label>
                 <input class="form-control form-control-lg" id="id_{{field.name}}" name="{{field.name}}" type="file" enctype="multipart/form-data">
             {% endfor %}
-            <button type="submit">Submit</button>
+            <button class="button" type="submit">Submit</button>
         </form>
         <hr>
         

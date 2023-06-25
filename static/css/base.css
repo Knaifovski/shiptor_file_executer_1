@@ -1,0 +1,36 @@
+body{
+    display: flex;
+    min-height:100vh;
+    align-items: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background-color: #212121;
+    font-family: 'Comfortaa', cursive;
+}
+.center-block{
+    max-width: 800px;
+    padding: 15px;
+    margin-left: auto;
+    margin-right: auto;
+}
+form{
+    border: 1px solid black;
+    padding: 48px 50px;
+    background-color: #f7f7f7;
+    border-radius: 15px;
+    margin: auto;
+}
+form .button {
+    display: block;
+    border: 1px solid black;
+    border-radius: 15px;
+    min-width: 50%;
+    margin-top: 40px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+form .button:hover{
+    background-color: #212121;
+    color: #f7f7f7;
+}
