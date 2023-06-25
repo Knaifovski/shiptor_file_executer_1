@@ -23,7 +23,8 @@
                 <label for="formFileLg" class="form-label">{{field.label}}</label>
                 <input class="form-control form-control-lg" id="id_{{field.name}}" name="{{field.name}}" type="file" enctype="multipart/form-data">
             {% endfor %}
-            <button class="button" type="submit">Submit</button>
+            <button class="button" type="submit">Исполнить</button>
+            <input type="button" class="button" value="Очистить форму" id="resetBtn" onClick="this.form.reset()" />
         </form>
         <hr>
         

@@ -34,3 +34,7 @@ form .button:hover{
     background-color: #212121;
     color: #f7f7f7;
 }
+
+form #resetBtn.button:hover{
+    background-color: #e74a4a;
+}
