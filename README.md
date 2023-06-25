@@ -22,7 +22,7 @@ secret_key=спросите или сгенерируйте самостояте
 
 
 генерация секретного ключа:
-запустите команду в cmd:
+запустите команду в открытом powershell:
 1) django-admin shell
 2) from django.core.management.utils import get_random_secret_key  
 3) get_random_secret_key()
