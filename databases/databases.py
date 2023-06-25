@@ -68,17 +68,6 @@ class Database_stock:
             return result
 
 
-Shiptor_Database = Database_stock(host=settings.shiptor_base_host,
-                                  database="shiptor",
-                                  user=settings.user,
-                                  password=settings.password)
-
-Stage_Shiptor_database = Database_stock(host=settings.shiptor_standby_base_host,
-                                        database='shiptor',
-                                        user=settings.user,
-                                        password=settings.password)
-
-
 class Standby_Shiptor_database(Database_stock):
 
     def get_query(self, field:str, packages: str, join="", extfields="" ):
@@ -175,6 +164,6 @@ class Standby_Shiptor_database(Database_stock):
                                                          line['reception_warehouse_id'], line['project_id']))
                     break
             else:
-                result.append(self.shiptor_data_dict(package, comment="Not found in shiptor"))
+                result.append(self.shiptor_data_dict(package, external=package, comment="Not found in shiptor"))
         logger.debug(f"ext={result}")
         return result

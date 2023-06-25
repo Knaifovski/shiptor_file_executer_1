@@ -48,6 +48,3 @@ def home(request):
     else:
         form = UploadFileForm()
     return render(request, template, {'form': form})
-
-def export_shiptor_data(request):
-    return FileResponse(open(FILENAME_FIRST, 'rb'), as_attachment=True, filename="daiy_export.xlsx")
