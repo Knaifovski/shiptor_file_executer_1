@@ -32,8 +32,8 @@ def home(request):
                 s = request.FILES['input']
                 logger.debug(f"{s}, {type(s)}")
                 packages = file_handle.get_packages_from_file(s.temporary_file_path())
-                df = shiptor.get_packages(packages)
-                pd.DataFrame(df).to_excel(FILENAME_FIRST, header=True, index=False)
+                df = pd.DataFrame(shiptor.get_packages(packages)).drop_duplicates(subset=["value"], keep='first')
+                df.to_excel(FILENAME_FIRST, header=True, index=False)
                 return FileResponse(open(FILENAME_FIRST, 'rb'), as_attachment=True,
                                     filename="1 ShiptorData.xlsx")
             elif len(request.FILES) == 4: #сменить на 4

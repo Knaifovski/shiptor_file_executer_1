@@ -57,6 +57,7 @@ class Database_stock:
                 # return None
             except Exception as e:
                 logger.error(f"DB {self.database}| Error = {e}")
+                TRYIES+=1
         return []
 
 
@@ -72,22 +73,23 @@ class Standby_Shiptor_database(Database_stock):
 
     def get_query(self, field:str, packages: str, join="", extfields="" ):
         return """select p.id, external_id,sm.name, p.current_status,p.returned_at,
-                reception_warehouse_id, project_id, return_id {extfields} from package p
+                reception_warehouse_id, pj.name "project", return_id {extfields} from package p
                  join package_departure pd on p.id = pd.package_id
+                 join project pj on p.project_id = pj.id
                  join shipping.method_tariff smt on pd.shipping_method_tariff_id = smt.id
                  join shipping.method sm on smt.shipping_method_slug = sm.slug
                  {join}
                 where previous_id is null and {field} in ({packages})""".format(field=field,packages=packages,join=join, extfields=extfields)
 
     def shiptor_data_dict(self, value, package_id=None, external=None, method=None, shiptor_status=None,
-                          returned_at=None, return_id=None, reception_warehouse_id=None, project_id=None,
+                          returned_at=None, return_id=None, reception_warehouse_id=None, project=None,
                           comment=None) -> dict:
         return {'value': value, 'id': package_id, 'external': external, 'method': method,
                 'shiptor_status':shiptor_status, 'returned_at': returned_at, 'return_id': return_id,
-                'reception_warehouse_id': reception_warehouse_id, 'project_id': project_id, 'comment': comment}
+                'reception_warehouse_id': reception_warehouse_id, 'project': project, 'comment': comment}
 
     def get_packages(self, packages: list):
-        rps, externals, barcodes, allik = [], [], [], []
+        rps, externals, barcodes, full_data = [], [], [], []
         for package in packages:
             if str(package).upper()[0:2] == 'RP':
                 rps.append(f"{package[2:]}")
@@ -104,6 +106,12 @@ class Standby_Shiptor_database(Database_stock):
         rps_e = self.get_packages_by_id(rps)
         externals_e = self.get_packages_by_external(externals)
         logger.debug(f"all = {rps_e+externals_e}")
+        full_data = rps_e+externals_e
+        for package in full_data:
+            if package['method'] in ("Возвраты", "Легкий возврат \"СММ\"","клиентский возврат (ВСП-дверь)"):
+                package['result'] = f"RP{package['id']}"
+            else:
+                package['result'] = package['external']
         return rps_e+externals_e
 
     def get_packages_by_id(self, packages: list) -> list:
@@ -118,7 +126,7 @@ class Standby_Shiptor_database(Database_stock):
                 if int(package) == line['id']:
                     result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['name'],
                                                          line['current_status'],line['returned_at'], line['return_id'],
-                                                         line['reception_warehouse_id'], line['project_id']))
+                                                         line['reception_warehouse_id'], line['project']))
                     break
             else:
                 result.append(self.shiptor_data_dict(package, comment="Not found in shiptor"))
@@ -136,7 +144,7 @@ class Standby_Shiptor_database(Database_stock):
                 if package[1:-1] == line['external_id']:
                     result.append(self.shiptor_data_dict(package[1:-1],line['id'], line['external_id'], line['name'],
                                                          line['current_status'],line['returned_at'], line['return_id'],
-                                                         line['reception_warehouse_id'], line['project_id']))
+                                                         line['reception_warehouse_id'], line['project']))
                     break
             else:
                 barcodes.append(package)
@@ -161,7 +169,7 @@ class Standby_Shiptor_database(Database_stock):
                 if package == line['surrogate']:
                     result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['name'],
                                                          line['current_status'], line['returned_at'], line['return_id'],
-                                                         line['reception_warehouse_id'], line['project_id']))
+                                                         line['reception_warehouse_id'], line['project']))
                     break
             else:
                 result.append(self.shiptor_data_dict(package, external=package, comment="Not found in shiptor"))

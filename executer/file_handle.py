@@ -10,10 +10,13 @@ def get_packages_from_file(file) -> dict:
         dfs = {sheet_name: xl_file.parse(sheet_name) for sheet_name in xl_file.sheet_names}
         for df in dfs.values():
             packages = df['packages'].values.tolist()
+        # for package in packages:
+        #     package = str(package).rstrip()
+        packages = [str(package).rstrip().lstrip() for package in packages]
         return packages
     except:
-        logger.error("UNEXPECTER ERRIR")
-        raise Exception("ERROR")
+        logger.error("UNEXPECTER ERROR")
+        # raise Exception("ERROR")
 
 def get_files_data(files: MultiValueDict):
     PACKAGES_LIST: list
