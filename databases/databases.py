@@ -77,7 +77,7 @@ class Standby_Shiptor_database(Database_stock):
                  join shipping.method_tariff smt on pd.shipping_method_tariff_id = smt.id
                  join shipping.method sm on smt.shipping_method_slug = sm.slug
                  {join}
-                where {field} in ({packages})""".format(field=field,packages=packages,join=join, extfields=extfields)
+                where previous_id is null and {field} in ({packages})""".format(field=field,packages=packages,join=join, extfields=extfields)
 
     def shiptor_data_dict(self, value, package_id=None, external=None, method=None, shiptor_status=None,
                           returned_at=None, return_id=None, reception_warehouse_id=None, project_id=None,
