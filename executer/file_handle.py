@@ -28,6 +28,6 @@ def get_files_data(files: MultiValueDict):
     for file in files.values():
         file_data = pd.read_excel(file.temporary_file_path())
         file_data['external'] = file_data['external'].astype(str)
-        result['value']=result['value'].astype(str)
-        result = pd.merge(result, file_data, on='external', how='left')
+        result['value'] = result['value'].astype(str)
+        result = pd.merge(result, file_data, on='result', how='left')
     return result
