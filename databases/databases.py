@@ -73,19 +73,20 @@ class Standby_Shiptor_database(Database_stock):
 
     def get_query(self, field:str, packages: str, join="", extfields="" ):
         return """select p.id, external_id,sm.name, p.current_status,p.returned_at,
-                reception_warehouse_id, pj.name "project", return_id {extfields} from package p
+                reception_warehouse_id, pj.name "project", return_id, pb.main, pb.surrogate {extfields} from package p
                  join package_departure pd on p.id = pd.package_id
                  join project pj on p.project_id = pj.id
+                 join package_barcode pb on p.id=pb.package_id
                  join shipping.method_tariff smt on pd.shipping_method_tariff_id = smt.id
                  join shipping.method sm on smt.shipping_method_slug = sm.slug
                  {join}
                 where previous_id is null and {field} in ({packages})""".format(field=field,packages=packages,join=join, extfields=extfields)
 
-    def shiptor_data_dict(self, value, package_id=None, external=None, method=None, shiptor_status=None,
-                          returned_at=None, return_id=None, reception_warehouse_id=None, project=None,
-                          comment=None) -> dict:
-        return {'value': value, 'id': package_id, 'external': external, 'method': method,
-                'shiptor_status':shiptor_status, 'returned_at': returned_at, 'return_id': return_id,
+    def shiptor_data_dict(self, value, package_id=None, external=None, surrogate=None, main=None, method=None,
+                          shiptor_status=None,returned_at=None, return_id=None, reception_warehouse_id=None,
+                          project=None,comment=None) -> dict:
+        return {'value': value, 'id': package_id, 'external': external, 'surrogate': surrogate, 'main': main,
+                'method': method, 'shiptor_status':shiptor_status, 'returned_at': returned_at, 'return_id': return_id,
                 'reception_warehouse_id': reception_warehouse_id, 'project': project, 'comment': comment}
 
     def get_packages(self, packages: list):
@@ -108,11 +109,12 @@ class Standby_Shiptor_database(Database_stock):
         logger.debug(f"all = {rps_e+externals_e}")
         full_data = rps_e+externals_e
         for package in full_data:
-            if package['method'] in ("Возвраты", "Легкий возврат \"СММ\"","клиентский возврат (ВСП-дверь)"):
+            logger.debug(f" {package['method']}")
+            if "ВОЗВРАТ" in str(package['method']).upper():
                 package['result'] = f"RP{package['id']}"
             else:
                 package['result'] = package['external']
-        return rps_e+externals_e
+        return full_data
 
     def get_packages_by_id(self, packages: list) -> list:
         result, packages_string = [], []
@@ -124,8 +126,9 @@ class Standby_Shiptor_database(Database_stock):
         for package in packages:
             for line in data:
                 if int(package) == line['id']:
-                    result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['name'],
-                                                         line['current_status'],line['returned_at'], line['return_id'],
+                    result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['surrogate'],
+                                                         line['main'], line['name'],line['current_status'],
+                                                         line['returned_at'], line['return_id'],
                                                          line['reception_warehouse_id'], line['project']))
                     break
             else:
@@ -142,7 +145,8 @@ class Standby_Shiptor_database(Database_stock):
         for package in externals:
             for line in data:
                 if package[1:-1] == line['external_id']:
-                    result.append(self.shiptor_data_dict(package[1:-1],line['id'], line['external_id'], line['name'],
+                    result.append(self.shiptor_data_dict(package[1:-1],line['id'], line['external_id'],
+                                                         line['surrogate'],line['main'], line['name'],
                                                          line['current_status'],line['returned_at'], line['return_id'],
                                                          line['reception_warehouse_id'], line['project']))
                     break
@@ -157,9 +161,7 @@ class Standby_Shiptor_database(Database_stock):
     def get_packages_by_barcode(self, barcodes: list) -> list:
         result, packages_string = [], []
         packages_string = ",".join(barcodes)
-        query = self.get_query("UPPER(pb.surrogate)", packages_string,
-                               join="join package_barcode pb on p.id = pb.package_id",
-                               extfields=",pb.surrogate")
+        query = self.get_query("UPPER(pb.surrogate)", packages_string)
         data = self.get(query)
         logger.debug(f"externals shiptor = {data}")
         for package in barcodes:
@@ -167,7 +169,8 @@ class Standby_Shiptor_database(Database_stock):
             for line in data:
                 logger.debug(f"{line['surrogate']} = {package}")
                 if package == line['surrogate']:
-                    result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['name'],
+                    result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['surrogate'],
+                                                         line['main'], line['name'],
                                                          line['current_status'], line['returned_at'], line['return_id'],
                                                          line['reception_warehouse_id'], line['project']))
                     break
