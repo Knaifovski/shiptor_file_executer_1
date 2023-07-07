@@ -20,6 +20,7 @@ secret_key=спросите или сгенерируйте самостояте
 
 ![image](https://github.com/Knaifovski/shiptor_file_executer_1/assets/31153601/74f37360-1e8a-417b-86d4-c2d3254b6d30)
 
+5) Создайте папку temp в папке с приложением
 
 генерация секретного ключа:
 запустите команду в открытом powershell:
