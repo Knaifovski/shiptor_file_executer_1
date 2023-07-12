@@ -71,23 +71,28 @@ class Database_stock:
 
 class Standby_Shiptor_database(Database_stock):
 
-    def get_query(self, field:str, packages: str, join="", extfields="" ):
-        return """select p.id, external_id,sm.name, p.current_status,p.returned_at,
-                reception_warehouse_id, pj.name "project", return_id, pb.main, pb.surrogate {extfields} from package p
+    def get_query(self, field:str, packages: str, join="", extfields="", extrawhere: list = None):
+        query = """select p.id, external_id,sm.name as "method_name", p.current_status,p.returned_at, previous_id,
+                 pj.name as "project", return_id, pb.main, pb.surrogate {extfields} from package p
                  join package_departure pd on p.id = pd.package_id
                  join project pj on p.project_id = pj.id
                  join package_barcode pb on p.id=pb.package_id
                  join shipping.method_tariff smt on pd.shipping_method_tariff_id = smt.id
                  join shipping.method sm on smt.shipping_method_slug = sm.slug
                  {join}
-                where previous_id is null and {field} in ({packages})""".format(field=field,packages=packages,join=join, extfields=extfields)
+                where {field} in ({packages})""".format(field=field, packages=packages,join=join, extfields=extfields)
+        if extrawhere:
+            for where in extrawhere:
+                query += f" and {where['condition']} {where['operator']} ({where['values']})"
+        return query
 
-    def shiptor_data_dict(self, value, package_id=None, external=None, surrogate=None, main=None, method=None,
-                          shiptor_status=None,returned_at=None, return_id=None, reception_warehouse_id=None,
-                          project=None,comment=None) -> dict:
-        return {'value': value, 'id': package_id, 'external': external, 'surrogate': surrogate, 'main': main,
-                'method': method, 'shiptor_status':shiptor_status, 'returned_at': returned_at, 'return_id': return_id,
-                'reception_warehouse_id': reception_warehouse_id, 'project': project, 'comment': comment}
+    def shiptor_data_dict(self, value, id=None, external_id=None, surrogate=None, main=None, method_name=None,
+                          current_status=None, returned_at=None, return_id=None, reception_warehouse_id=None,
+                          project=None,comment=None, previous_id=None) -> dict:
+        return {'value': value, 'id': id, 'external_id': external_id, 'surrogate': surrogate, 'main': main,
+                'method': method_name, 'shiptor_status': current_status, 'returned_at': returned_at, 'return_id': return_id,
+                'reception_warehouse_id': reception_warehouse_id, 'project': project, 'previous_id':previous_id,
+                'comment': comment}
 
     def get_packages(self, packages: list):
         rps, externals, barcodes, full_data = [], [], [], []
@@ -104,36 +109,46 @@ class Standby_Shiptor_database(Database_stock):
             logger.error(f"lost packages count {len(packages) - (len(externals) + len(rps))}")
         #########################################################################################
 
+        if len(rps) == 0:
+            rps_e = []
         rps_e = self.get_packages_by_id(rps)
+        if len(externals) == 0:
+            rps_e = []
         externals_e = self.get_packages_by_external(externals)
         logger.debug(f"all = {rps_e+externals_e}")
         full_data = rps_e+externals_e
         for package in full_data:
-            logger.debug(f" {package['method']}")
             if "ВОЗВРАТ" in str(package['method']).upper():
                 package['result'] = f"RP{package['id']}"
             else:
-                package['result'] = package['external']
+                package['result'] = package['external_id']
         return full_data
 
-    def get_packages_by_id(self, packages: list) -> list:
-        result, packages_string = [], []
+    def get_packages_by_id(self, packages: list, field="p.id", extrawhere: list = None) -> list:
+        result, packages_string, previouses = [], [], []
         logger.debug(f"packages: {packages}")
         packages_string = ",".join(packages)
-        query = self.get_query("p.id", packages_string)
+        query = self.get_query(field, packages_string, extrawhere=extrawhere)
         logger.debug(f"query= {query}")
         data = self.get(query)
         for package in packages:
             for line in data:
                 if int(package) == line['id']:
-                    result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['surrogate'],
-                                                         line['main'], line['name'],line['current_status'],
-                                                         line['returned_at'], line['return_id'],
-                                                         line['reception_warehouse_id'], line['project']))
-                    break
+                    if line['previous_id']:
+                        previouses.append(f"{line['previous_id']}")
+                        break
+                    else:
+                        result.append(self.shiptor_data_dict(package, **line))
+                        break
             else:
                 result.append(self.shiptor_data_dict(package, comment="Not found in shiptor"))
-        logger.debug(f"result = {result}")
+        if previouses:
+            logger.debug(f"Start get previouses. Previous = {previouses}")
+            # conditions = [{'condition': "p.previous_id", 'operator': "is", 'values': "null"}]
+            previouses = self.get_packages_by_id(previouses)
+            logger.debug(f"Finish get prviouses")
+            result += previouses
+        logger.debug(f"result len = {len(result)}")
         return result
 
     def get_packages_by_external(self, externals: list) -> list:
@@ -141,21 +156,18 @@ class Standby_Shiptor_database(Database_stock):
         packages_string = ",".join(externals)
         query = self.get_query("UPPER(p.external_id)", packages_string)
         data = self.get(query)
-        logger.debug(f"externals shiptor = {data}")
+        logger.debug(f"externals shiptor len = {len(data)}")
         for package in externals:
             for line in data:
                 if package[1:-1] == line['external_id']:
-                    result.append(self.shiptor_data_dict(package[1:-1],line['id'], line['external_id'],
-                                                         line['surrogate'],line['main'], line['name'],
-                                                         line['current_status'],line['returned_at'], line['return_id'],
-                                                         line['reception_warehouse_id'], line['project']))
+                    result.append(self.shiptor_data_dict(package[1:-1], **line))
                     break
             else:
                 barcodes.append(package)
 
         barcodes = self.get_packages_by_barcode(barcodes)
         result += barcodes
-        logger.debug(f"ext={result}")
+        logger.debug(f"ext len={len(result)}")
         return result
 
     def get_packages_by_barcode(self, barcodes: list) -> list:
@@ -169,12 +181,9 @@ class Standby_Shiptor_database(Database_stock):
             for line in data:
                 logger.debug(f"{line['surrogate']} = {package}")
                 if package == line['surrogate']:
-                    result.append(self.shiptor_data_dict(package, line['id'], line['external_id'], line['surrogate'],
-                                                         line['main'], line['name'],
-                                                         line['current_status'], line['returned_at'], line['return_id'],
-                                                         line['reception_warehouse_id'], line['project']))
+                    result.append(self.shiptor_data_dict(package, **line))
                     break
             else:
-                result.append(self.shiptor_data_dict(package, external=package, comment="Not found in shiptor"))
-        logger.debug(f"ext={result}")
+                result.append(self.shiptor_data_dict(package, comment="Not found in shiptor"))
+        logger.debug(f"ext len={len(result)}")
         return result
