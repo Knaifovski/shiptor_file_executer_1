@@ -15,11 +15,32 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="center-block">
+    <div class="loader" style="display: none;" id="id_loader"></div>
+    <div id="bigform" class="container-md">
+        <div class="row">
+            <div class="col-md-6">
+                <label>Values</label>
+                <textarea class="form-control" id="values" rows="30"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label>Result</label>
+                <textarea class="form-control" id="result" readonly resize="none" rows="30"></textarea>
+            </div>
+        </div>
+        <div id="form-buttons" class="row">
+            <div class="col-md-12">
+                <button id="execute" type="button" class="btn btn-success btn-lg btn-block">Исполнить</button>
+                <button id="clean" type="button" class="btn btn-danger btn-lg btn-block">Сброс</button>
+            </div>
+        </div>
+    </div>
+    
+
+
+    <!-- <div class="center-block">
         <form action="" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %} 
-                <!-- {{field}} -->
                 <label for="formFileLg" class="form-label">{{field.label}}</label>
                 <input class="form-control form-control-lg" id="id_{{field.name}}" name="{{field.name}}" type="file" enctype="multipart/form-data">
             {% endfor %}
@@ -27,8 +48,8 @@
             <input type="button" class="button" value="Очистить форму" id="resetBtn" onClick="this.form.reset()" />
         </form>
         <hr>
-        
-    </div>
+    </div> -->
+
 </body>
 {% block afterload %}
 <!-- jquery -->
@@ -40,6 +61,8 @@
 <!-- alerts -->
 <script src="{% static 'libs\sweetalert\sweetalert2.min.js' %}"></script>
 <link rel="stylesheet" href="{% static 'libs\sweetalert\sweetalert2.min.css' %}">
+<!-- main -->
+<script src="{% static 'js\main.js' %}"></script>
 <!-- icons -->
 <script src="https://kit.fontawesome.com/6d34e8eff8.js" crossorigin="anonymous"></script>
 {%endblock%}
