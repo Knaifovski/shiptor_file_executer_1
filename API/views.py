@@ -25,7 +25,6 @@ class GetPackages(APIView):
 
     def post(self, *args, **kwargs):
         logger.debug(f" args={args}, kwargs={kwargs} data= {self.request.data}")
-        # values = self.request.data['packages'].split('\n')
         values = split('; |, |\n |\s', self.request.data['packages'])
         try:
             i = 0
