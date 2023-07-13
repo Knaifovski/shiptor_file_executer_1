@@ -83,7 +83,7 @@ class Standby_Shiptor_database(Database_stock):
                 where {field} in ({packages})""".format(field=field, packages=packages,join=join, extfields=extfields)
         if extrawhere:
             for where in extrawhere:
-                query += f" and {where['condition']} {where['operator']} ({where['values']})"
+                query += f" and {where['condition']} {where['operator']} {where['values']}"
         return query
 
     def shiptor_data_dict(self, value, id=None, external_id=None, surrogate=None, main=None, method_name=None,
@@ -144,7 +144,6 @@ class Standby_Shiptor_database(Database_stock):
                 result.append(self.shiptor_data_dict(package, comment="Not found in shiptor"))
         if previouses:
             logger.debug(f"Start get previouses. Previous = {previouses}")
-            # conditions = [{'condition': "p.previous_id", 'operator': "is", 'values': "null"}]
             previouses = self.get_packages_by_id(previouses)
             logger.debug(f"Finish get prviouses")
             result += previouses
@@ -154,7 +153,8 @@ class Standby_Shiptor_database(Database_stock):
     def get_packages_by_external(self, externals: list) -> list:
         result, packages_string, barcodes = [], [], []
         packages_string = ",".join(externals)
-        query = self.get_query("UPPER(p.external_id)", packages_string)
+        conditions = [{'condition': "p.previous_id", 'operator': "is", 'values': "null"}]
+        query = self.get_query("UPPER(p.external_id)", packages_string, extrawhere=conditions)
         data = self.get(query)
         logger.debug(f"externals shiptor len = {len(data)}")
         for package in externals:
@@ -173,7 +173,8 @@ class Standby_Shiptor_database(Database_stock):
     def get_packages_by_barcode(self, barcodes: list) -> list:
         result, packages_string = [], []
         packages_string = ",".join(barcodes)
-        query = self.get_query("UPPER(pb.surrogate)", packages_string)
+        conditions = [{'condition': "p.previous_id", 'operator': "is", 'values': "null"}]
+        query = self.get_query("UPPER(pb.surrogate)", packages_string, extrawhere=conditions)
         data = self.get(query)
         logger.debug(f"externals shiptor = {data}")
         for package in barcodes:
