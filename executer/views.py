@@ -36,4 +36,4 @@ def home(request):
                 logger.error(f"request.FILES error files count = {len(request.FILES)}", request.FILES, request.POST)
     else:
         form = UploadFileForm()
-    return render(request, template, {'form': form})
+    return render(request, template, {'form': form, 'warehouses': settings.SAP_WAREHOUSES})

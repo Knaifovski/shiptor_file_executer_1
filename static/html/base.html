@@ -15,21 +15,46 @@
     <title>Document</title>
 </head>
 <body>
+    <div id="change_warehouse" style="display: none;">
+        <div class="modal-block">
+            <label for="warehouses">Выберите склад</label>
+            <select id="warehouse" class="form-control" id="warehouses">
+                {% for wh in warehouses.values%}
+                    <option value="{{wh.prefix}}">{{wh.sap_wh_id}}|{{wh.shiptor_wh_name}}</span></option>
+                {% endfor %}
+            </select>
+            <button id="execute" type="button" class="btn btn-success btn-lg">Исполнить</button>
+        </div>
+    </div>
     <div class="loader" style="display: none;" id="id_loader"></div>
     <div id="bigform" class="container-md">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label>Values</label>
                 <textarea class="form-control" id="values" rows="30"></textarea>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label>Result</label>
                 <textarea class="form-control" id="result" readonly resize="none" rows="30"></textarea>
+            </div>
+            <div class="col-md-4">
+                <div class="center-block">
+                    <form action="" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% for field in form %} 
+                            <label for="formFileLg" class="form-label">{{field.label}}</label>
+                            <input class="form-control form-control-lg" id="id_{{field.name}}" name="{{field.name}}" type="file" enctype="multipart/form-data">
+                        {% endfor %}
+                        <button class="button" type="submit">Исполнить</button>
+                        <input type="button" class="button" value="Очистить форму" id="resetBtn" onClick="this.form.reset()" />
+                    </form>
+                    <hr>
+                </div>
             </div>
         </div>
         <div id="form-buttons" class="row">
             <div class="col-md-12">
-                <button id="execute" type="button" class="btn btn-success btn-lg btn-block">Исполнить</button>
+                <button id="choose_wh" type="button" class="btn btn-success btn-lg btn-block">Выбрать склад</button>
                 <button id="clean" type="button" class="btn btn-danger btn-lg btn-block">Сброс</button>
             </div>
         </div>
@@ -37,18 +62,6 @@
     
 
 
-    <!-- <div class="center-block">
-        <form action="" method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            {% for field in form %} 
-                <label for="formFileLg" class="form-label">{{field.label}}</label>
-                <input class="form-control form-control-lg" id="id_{{field.name}}" name="{{field.name}}" type="file" enctype="multipart/form-data">
-            {% endfor %}
-            <button class="button" type="submit">Исполнить</button>
-            <input type="button" class="button" value="Очистить форму" id="resetBtn" onClick="this.form.reset()" />
-        </form>
-        <hr>
-    </div> -->
 
 </body>
 {% block afterload %}

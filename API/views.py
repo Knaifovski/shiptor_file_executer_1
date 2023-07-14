@@ -29,6 +29,8 @@ class GetPackages(APIView):
     def post(self, *args, **kwargs):
         logger.debug(f" args={args}, kwargs={kwargs} data= {self.request.data}")
         values = split('; |, |\n', self.request.data['packages'])
+        logger.debug(f"values len = {len(values)}")
+
         try:
             i = 0
             while (i < len(values)):
@@ -36,16 +38,17 @@ class GetPackages(APIView):
                 values[i] = values[i].rstrip(',')
                 values[i] = values[i].strip('\'\"\n')
                 logger.debug(f"i={i}|value = {values[i]} len={len(values[i])}")
-                if len(values[i]) < 8:
+                if len(values[i]) < 4:
                     values.remove(values[i])
                     i = i - 1
                 i += 1
-
         except IndexError:
             logger.debug(f"End of values. Values len = {len(values)}")
+        if len(values) < 1:
+            return Response({'result': "Не переданы значения"}, status=status.HTTP_400_BAD_REQUEST)
         logger.debug(f"apiresult = {values}")
         shiptordata = shiptor.get_packages(values)
         df = pd.DataFrame(shiptordata).drop_duplicates(subset=["value"], keep='first')
         df.to_excel(settings.FILENAME_FIRST, header=True, index=False)
         result = "".join([f"{i['value']} {i['comment']}\n" for i in shiptordata])
-        return Response({"result": str(result)}, status=status.HTTP_200_OK)
+        return Response({"result": str(result), 'count': {len(values)}}, status=status.HTTP_200_OK)

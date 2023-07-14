@@ -94,7 +94,7 @@ class Standby_Shiptor_database(Database_stock):
                 'reception_warehouse_id': reception_warehouse_id, 'project': project, 'previous_id':previous_id,
                 'comment': comment}
 
-    def get_packages(self, packages: list):
+    def get_packages(self, packages: list, prefix: str = None):
         rps, externals, barcodes, full_data = [], [], [], []
         for package in packages:
             if str(package).upper()[0:2] == 'RP':
@@ -118,6 +118,17 @@ class Standby_Shiptor_database(Database_stock):
         logger.debug(f"all = {rps_e+externals_e}")
         full_data = rps_e+externals_e
         for package in full_data:
+            try:
+                package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
+            except:
+                package['SAP_WH'] = "Not Found"
+            # if package['shiptor_status'] == 'delivered' and package['shiptor_status'] not in ('return_to_sender',
+            #                                                                                   'returned'):
+            #     package['comment']+= f"Статус равен {package['shiptor_status']}. Обратитесь к аккаунт менеджеру"
+            #     break
+            # if str(package.external).__contains__('*'):
+            #     package['comment'] += 'Мерчант'
+            #     break
             if "ВОЗВРАТ" in str(package['method']).upper():
                 package['result'] = f"RP{package['id']}"
             else:
@@ -164,8 +175,8 @@ class Standby_Shiptor_database(Database_stock):
                     break
             else:
                 barcodes.append(package)
-
-        barcodes = self.get_packages_by_barcode(barcodes)
+        if barcodes:
+            barcodes = self.get_packages_by_barcode(barcodes)
         result += barcodes
         logger.debug(f"ext len={len(result)}")
         return result
