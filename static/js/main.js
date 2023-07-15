@@ -49,3 +49,6 @@ $('#clean').click(function(){
 $("#choose_wh").click(function(){
   $("#change_warehouse").show()
 })
+$("#cancel").click(function(){
+  $("#change_warehouse").hide()
+})
