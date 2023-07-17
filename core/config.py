@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     shiptor_standby_base_host: str
     FILEFOLDER = 'temp/'
     FILENAME_FIRST = FILEFOLDER + 'ShiptorData.xlsx'
+    FILENAME_SECOND = FILEFOLDER + 'MergeData.xlsx'
     FILERESULT = FILEFOLDER + 'RESULT.xlsx'
     SAP_WAREHOUSES = {
         '12357': {'sap_wh_id': 1000, 'prefix': 12357, 'shiptor_wh_name': "Склад ФФ Москва Шарапово"},
