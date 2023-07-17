@@ -25,13 +25,15 @@ def home(request):
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            if len(request.FILES) > 0:
+            if True:
                 request.FILES['input'] = settings.FILENAME_FIRST
-                result = file_handle.get_files_data(request.FILES)
+                result = file_handle.get_files_data({'input': settings.FILENAME_FIRST,
+                                                     'extradata': settings.FILENAME_SECOND})
                 pd.DataFrame(result).to_excel(settings.FILERESULT, header=True, index=False)
                 return FileResponse(open(settings.FILERESULT, 'rb'), as_attachment=True,
                                     filename="RESULT.xlsx")
             else:
+                logger.debug(f"Request post: {request.POST}")
                 # Если функция не увидела файлов \ Если количество файлов != 4,1
                 logger.error(f"request.FILES error files count = {len(request.FILES)}", request.FILES, request.POST)
     else:

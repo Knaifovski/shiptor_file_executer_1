@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 import pandas as pd
 
+from API.serializer import MergeSerializer
 from core import config
 from databases.databases import Standby_Shiptor_database
 
@@ -52,3 +53,19 @@ class GetPackages(APIView):
         df.to_excel(settings.FILENAME_FIRST, header=True, index=False)
         result = "".join([f"{i['value']} {i['comment']}\n" for i in shiptordata])
         return Response({"result": str(result), 'count': {len(values)}}, status=status.HTTP_200_OK)
+
+class MergeData(APIView):
+    def post(self, *args, **kwargs):
+        dfs = []
+        logger.debug(f"args = {args} kwargs = {kwargs}, data={self.request.data}")
+        serialzer = MergeSerializer(data=self.request.data)
+        serialzer.is_valid()
+        data = serialzer.validated_data
+        logger.debug(f"keys = {data.keys()}")
+        writer = pd.ExcelWriter(settings.FILENAME_SECOND)
+
+        for key in data.keys():
+            dfs.append(pd.DataFrame(data[key], columns=data[key].keys()))
+            _ = [A.to_excel(writer, index=False, sheet_name="{0}".format(key)) for i, A in enumerate(dfs)]
+        writer.close()
+        return Response({"result": data}, status=status.HTTP_200_OK)

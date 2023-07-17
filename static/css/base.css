@@ -24,16 +24,20 @@ body{
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-#change_warehouse {
+#modal-bg {
+    z-index: 1;
     position: absolute;
     width: 100%;
     height: 100%;
     background-color: #707070cf;
 }
+.modal-block{
+    z-index: 50;
+}
 
-#change_warehouse > .modal-block{
+.modal-block{
     position: absolute;
-    top: 34%;
+    top: auto;
     left: 23%;
     min-width: 40%;
     border: 1px solid whitesmoke;
@@ -83,7 +87,7 @@ form{
     border-radius: 15px;
     margin: auto;
 }
-form .button {
+form .main_button {
     display: block;
     border: 1px solid black;
     border-radius: 15px;
@@ -93,11 +97,11 @@ form .button {
     margin-right: auto;
 }
 
-form .button:hover{
+form .main_button:hover{
     background-color: #212121;
     color: #f7f7f7;
 }
 
-form #resetBtn.button:hover{
+form #resetBtn.main_button:hover{
     background-color: #e74a4a;
 }
