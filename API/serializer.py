@@ -39,9 +39,13 @@ class MergeSerializer(serializers.Serializer):
                 if len(data[i]) < 4:
                     data.remove(data[i])
                 line = data[i].split("\t")
+                if len(line) == 1:
+                    line = [data[i], "Да"]
                 for key in fields:
                     for value in line:
                         result[key].append(value)
+                        line.remove(value)
+                        break
                 i += 1
         except IndexError:
             logger.debug(f"End of values")
