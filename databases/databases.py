@@ -74,8 +74,10 @@ class Database_stock:
 class Standby_Shiptor_database(Database_stock):
 
     def get_query(self, field:str, packages: str, join="", extfields="", extrawhere: list = None):
-        query = """select p.id, external_id,smt.id as "method_id", sm.name as "method_name", p.current_status,p.returned_at,
-                 previous_id, pj.name as "project", return_id, pb.main, pb.surrogate {extfields} from package p
+        query = """select p.id, external_id,smt.id as "method_id", sm.name as "method_name", p.current_status,
+                p.returned_at,previous_id, pj.name as "project", return_id, pb.main, pb.surrogate, p.delivered_at
+                 {extfields} 
+                 from package p
                  join package_departure pd on p.id = pd.package_id
                  join project pj on p.project_id = pj.id
                  join package_barcode pb on p.id=pb.package_id
@@ -89,12 +91,13 @@ class Standby_Shiptor_database(Database_stock):
         return query
 
     def shiptor_data_dict(self, value, id=None, external_id=None, surrogate=None, main=None, method_id=None,
-                          method_name=None, current_status=None, returned_at=None, return_id=None,
+                          method_name=None, current_status=None, returned_at=None, return_id=None, delivered_at=None,
                           reception_warehouse_id=None, project=None,comment=None, previous_id=None) -> dict:
         return {'value': value, 'id': id, 'external_id': external_id, 'surrogate': surrogate, 'main': main,
                 'method_id': method_id, 'method': method_name, 'shiptor_status': current_status,
-                'returned_at': returned_at, 'return_id': return_id, 'reception_warehouse_id': reception_warehouse_id,
-                'project': project, 'previous_id':previous_id, 'comment': comment}
+                'delivered_at': delivered_at,'returned_at': returned_at, 'return_id': return_id,
+                'reception_warehouse_id': reception_warehouse_id,'project': project, 'previous_id':previous_id,
+                'comment': comment}
 
     def get_packages(self, packages: list, prefix: str = None):
         rps, externals, barcodes, full_data = [], [], [], []
@@ -133,14 +136,17 @@ class Standby_Shiptor_database(Database_stock):
                 comment.append("Мерчант")
             if package['method_id'] in (571, 827, 672):
                 package['result'] = f"RP{package['id']}"
+                if package['delivered_at']:
+                    if package['delivered_at'] > datetime(year=2023, month=6, day=16):
+                        comment.append('Проблема СММ(SHPTRERP-4675)')
             else:
                 package['result'] = package['external_id']
+                if package['returned_at']:
+                    if package['returned_at'] > datetime(year=2023, month=6, day=16):
+                        comment.append('Проблема СММ(SHPTRERP-4675)')
             if package['result'] is None:
                 package['result'] = package['value']
                 comment.append(package['comment'])
-            if package['returned_at']:
-                if package['returned_at'] > datetime(year=2023, month=6, day=16):
-                    comment.append('Проблема СММ(SHPTRERP-4675)')
             package['comment'] = ",".join(comment)
         return full_data
 
