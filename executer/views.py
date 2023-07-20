@@ -2,7 +2,7 @@ from django.http import FileResponse
 from django.shortcuts import render
 from loguru import logger
 import pandas as pd
-
+from pandas import ExcelWriter
 
 from databases.databases import Standby_Shiptor_database
 from core import config
@@ -25,17 +25,17 @@ def home(request):
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            if True:
-                request.FILES['input'] = settings.FILENAME_FIRST
-                result = file_handle.get_files_data({'input': settings.FILENAME_FIRST,
-                                                     'extradata': settings.FILENAME_SECOND})
-                pd.DataFrame(result).to_excel(settings.FILERESULT, header=True, index=False)
-                return FileResponse(open(settings.FILERESULT, 'rb'), as_attachment=True,
-                                    filename="RESULT.xlsx")
-            else:
-                logger.debug(f"Request post: {request.POST}")
-                # Если функция не увидела файлов \ Если количество файлов != 4,1
-                logger.error(f"request.FILES error files count = {len(request.FILES)}", request.FILES, request.POST)
+            request.FILES['input'] = settings.FILENAME_FIRST
+            result = file_handle.get_files_data({'input': settings.FILENAME_FIRST,
+                                                 'extradata': settings.FILENAME_SECOND})
+            logger.debug(result)
+            with ExcelWriter(settings.FILERESULT) as writer:
+                result['simple'].to_excel(writer, sheet_name='Результат', header=True, index=False)
+                result['result'].to_excel(writer, sheet_name='Подробнее', header=True, index=False)
+                for sheet in result['extradata_dfs']:
+                    result['extradata_dfs'][sheet].to_excel(writer, sheet_name=sheet)
+            return FileResponse(open(settings.FILERESULT, 'rb'), as_attachment=True,
+                                filename="RESULT.xlsx")
     else:
         form = UploadFileForm()
     return render(request, template, {'form': form, 'warehouses': settings.SAP_WAREHOUSES})
