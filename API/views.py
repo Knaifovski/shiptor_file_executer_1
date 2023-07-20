@@ -56,15 +56,15 @@ class GetPackages(APIView):
 
 class MergeData(APIView):
     def post(self, *args, **kwargs):
-        dfs = []
         logger.debug(f"args = {args} kwargs = {kwargs}, data={self.request.data}")
         serialzer = MergeSerializer(data=self.request.data)
         serialzer.is_valid()
         data = serialzer.validated_data
-        logger.debug(f"keys = {data.keys()}")
+        logger.debug(f"serializer data = {data}")
         writer = pd.ExcelWriter(settings.FILENAME_SECOND)
 
         for key in data.keys():
+            dfs = []
             dfs.append(pd.DataFrame(data[key], columns=data[key].keys()))
             _ = [A.to_excel(writer, index=False, sheet_name="{0}".format(key)) for i, A in enumerate(dfs)]
         writer.close()
