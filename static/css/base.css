@@ -59,7 +59,12 @@ body{
     margin-right: auto;
     width: 100%;
 }
-
+#copy i{
+    color: white;
+}
+#copy:hover i{
+    color: black;
+}
 
 .btn-block{
     display: block;

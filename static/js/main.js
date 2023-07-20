@@ -83,6 +83,16 @@ $(document).ready(function () {
       }
     });
   })
+
+  $("#copy").click(function(){
+    navigator.clipboard.writeText($("#result").val())
+  .then(() => {
+    // успех
+  })
+  .catch(err => {
+    console.log('Something went wrong', err);
+  });
+  })
 })
 
 $(MODAL_SUBMITS).each(function(evt,btn){
