@@ -1,7 +1,9 @@
 # Developed by NickolaQ Trekov
+from datetime import datetime
 import logging
 import re
 
+import pandas as pd
 import psycopg2
 from psycopg2._psycopg import OperationalError
 from core.logging import logger
@@ -72,27 +74,27 @@ class Database_stock:
 class Standby_Shiptor_database(Database_stock):
 
     def get_query(self, field:str, packages: str, join="", extfields="", extrawhere: list = None):
-        query = """select p.id, external_id,sm.name as "method_name", p.current_status,p.returned_at, previous_id,
-                 pj.name as "project", return_id, pb.main, pb.surrogate {extfields} from package p
+        query = """select p.id, external_id,smt.id as "method_id", sm.name as "method_name", p.current_status,p.returned_at,
+                 previous_id, pj.name as "project", return_id, pb.main, pb.surrogate {extfields} from package p
                  join package_departure pd on p.id = pd.package_id
                  join project pj on p.project_id = pj.id
                  join package_barcode pb on p.id=pb.package_id
                  join shipping.method_tariff smt on pd.shipping_method_tariff_id = smt.id
                  join shipping.method sm on smt.shipping_method_slug = sm.slug
                  {join}
-                where {field} in ({packages})""".format(field=field, packages=packages,join=join, extfields=extfields)
+                where {field} in ({packages})""".format(field=field, packages=packages, join=join, extfields=extfields)
         if extrawhere:
             for where in extrawhere:
                 query += f" and {where['condition']} {where['operator']} {where['values']}"
         return query
 
-    def shiptor_data_dict(self, value, id=None, external_id=None, surrogate=None, main=None, method_name=None,
-                          current_status=None, returned_at=None, return_id=None, reception_warehouse_id=None,
-                          project=None,comment=None, previous_id=None) -> dict:
+    def shiptor_data_dict(self, value, id=None, external_id=None, surrogate=None, main=None, method_id=None,
+                          method_name=None, current_status=None, returned_at=None, return_id=None,
+                          reception_warehouse_id=None, project=None,comment=None, previous_id=None) -> dict:
         return {'value': value, 'id': id, 'external_id': external_id, 'surrogate': surrogate, 'main': main,
-                'method': method_name, 'shiptor_status': current_status, 'returned_at': returned_at, 'return_id': return_id,
-                'reception_warehouse_id': reception_warehouse_id, 'project': project, 'previous_id':previous_id,
-                'comment': comment}
+                'method_id': method_id, 'method': method_name, 'shiptor_status': current_status,
+                'returned_at': returned_at, 'return_id': return_id, 'reception_warehouse_id': reception_warehouse_id,
+                'project': project, 'previous_id':previous_id, 'comment': comment}
 
     def get_packages(self, packages: list, prefix: str = None):
         rps, externals, barcodes, full_data = [], [], [], []
@@ -118,21 +120,28 @@ class Standby_Shiptor_database(Database_stock):
         logger.debug(f"all = {rps_e+externals_e}")
         full_data = rps_e+externals_e
         for package in full_data:
+            comment = []
             try:
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
             except:
-                package['SAP_WH'] = "Not Found"
-            # if package['shiptor_status'] == 'delivered' and package['shiptor_status'] not in ('return_to_sender',
-            #                                                                                   'returned'):
-            #     package['comment']+= f"Статус равен {package['shiptor_status']}. Обратитесь к аккаунт менеджеру"
-            #     break
-            # if str(package.external).__contains__('*'):
-            #     package['comment'] += 'Мерчант'
-            #     break
-            if "ВОЗВРАТ" in str(package['method']).upper():
+                package['SAP_WH'] = pd.NA
+            if package['shiptor_status'] == 'delivered' and package['shiptor_status'] not in ('return_to_sender',
+                                                                                              'returned'):
+                comment.append(f"Статус {package['shiptor_status']}")
+
+            if str(package['external_id']).__contains__('*'):
+                comment.append("Мерчант")
+            if package['method_id'] in (571, 827, 672):
                 package['result'] = f"RP{package['id']}"
             else:
                 package['result'] = package['external_id']
+            if package['result'] is None:
+                package['result'] = package['value']
+                comment.append(package['comment'])
+            if package['returned_at']:
+                if package['returned_at'] > datetime(year=2023, month=6, day=16):
+                    comment.append('Проблема СММ(SHPTRERP-4675)')
+            package['comment'] = ",".join(comment)
         return full_data
 
     def get_packages_by_id(self, packages: list, field="p.id", extrawhere: list = None) -> list:

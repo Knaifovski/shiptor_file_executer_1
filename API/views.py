@@ -51,7 +51,7 @@ class GetPackages(APIView):
         shiptordata = shiptor.get_packages(values)
         df = pd.DataFrame(shiptordata).drop_duplicates(subset=["value"], keep='first')
         df.to_excel(settings.FILENAME_FIRST, header=True, index=False)
-        result = "".join([f"{i['value']} {i['comment']}\n" for i in shiptordata])
+        result = "".join([f"{i['value']}\n" for i in shiptordata])
         return Response({"result": str(result), 'count': {len(values)}}, status=status.HTTP_200_OK)
 
 class MergeData(APIView):
