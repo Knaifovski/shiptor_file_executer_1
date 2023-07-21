@@ -15,15 +15,15 @@ class MergeSerializer(serializers.Serializer):
     def validate(self, attrs):
         logger.debug(f"attrs = {attrs} keys={attrs.keys()}")
         try:
-            attrs['om'] = self.text_to_dict(attrs['om'], ['result', 'om'])
+            attrs['om'] = self.text_to_dict(attrs['om'], ['result', 'ОМ'])
         except KeyError:
             pass
         try:
-            attrs['vvp'] = self.text_to_dict(attrs['vvp'], ['result', 'vvp'])
+            attrs['vvp'] = self.text_to_dict(attrs['vvp'], ['result', 'ВВП'])
         except KeyError:
             pass
         try:
-            attrs['smm'] = self.text_to_dict(attrs['smm'], ['result', 'smm'])
+            attrs['smm'] = self.text_to_dict(attrs['smm'], ['result', 'Ответ СММ'])
         except KeyError:
             pass
         return attrs
