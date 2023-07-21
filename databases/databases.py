@@ -128,10 +128,6 @@ class Standby_Shiptor_database(Database_stock):
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
             except:
                 package['SAP_WH'] = pd.NA
-            if package['shiptor_status'] == 'delivered' and package['shiptor_status'] not in ('return_to_sender',
-                                                                                              'returned'):
-                comment.append(f"Статус {package['shiptor_status']}")
-
             if str(package['external_id']).__contains__('*'):
                 comment.append("Мерчант")
             if package['method_id'] in (571, 827, 672):
