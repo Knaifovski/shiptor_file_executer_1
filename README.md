@@ -16,11 +16,18 @@
 user=your_login 
 password=your_password 
 shiptor_standby_base_host=host.standby.shiptor 
-secret_key=спросите или сгенерируйте самостоятельно  
+secret_key=secret_key
+
+5) генерация секретного ключа
+   --строго после пункта 4, оставьте после secret_key=secret_key--
+запустите команду в открытом powershell:
+1) py manage.py shell
+2) from django.core.management.utils import get_random_secret_key  
+3) get_random_secret_key()
 
 ![image](https://github.com/Knaifovski/shiptor_file_executer_1/assets/31153601/74f37360-1e8a-417b-86d4-c2d3254b6d30)
 
-5) Создайте папку temp в папке с приложением
+6) Создайте папку temp в папке с приложением
 
 генерация секретного ключа:
 запустите команду в открытом powershell:
