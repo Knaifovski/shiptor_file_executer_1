@@ -1,3 +1,6 @@
+import os
+from time import sleep
+
 from django.http import FileResponse
 from django.shortcuts import render
 from loguru import logger
@@ -21,10 +24,13 @@ shiptor = Standby_Shiptor_database(host= settings.shiptor_standby_base_host,
 
 
 def home(request):
+    if not os.path.isdir(settings.FILEFOLDER):
+        os.mkdir(settings.FILEFOLDER)
     template = 'base.html'
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
+            sleep(1)
             request.FILES['input'] = settings.FILENAME_FIRST
             result = file_handle.get_files_data({'input': settings.FILENAME_FIRST,
                                                  'extradata': settings.FILENAME_SECOND})

@@ -28,6 +28,7 @@ def get_files_data(files: dict):
 
     extradata_dfs = {sheet_name: extradata.parse(sheet_name) for sheet_name in extradata.sheet_names}
     result['result'] = result['result'].astype(str)
+    result_simple['result'] = result['result'].astype(str)
     for sheet in extradata_dfs:
         logger.debug(f"sheet={sheet} values: {extradata_dfs[sheet]}")
         extradata_dfs[sheet]['result'] = extradata_dfs[sheet]['result'].astype(str)

@@ -1,15 +1,9 @@
-import json
 from re import split
 
-from django.contrib.auth import login
 from loguru import logger
-from rest_framework import viewsets, generics, status
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.generics import ListAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 import pandas as pd
 
 from API.serializer import MergeSerializer
