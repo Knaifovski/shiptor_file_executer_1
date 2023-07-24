@@ -20,15 +20,13 @@ def get_files_data(files: dict):
     PACKAGES_LIST: list
     input_file = files['input']
     extradata = pd.ExcelFile(files['extradata'])
-    result = pd.read_excel(input_file)
+    result = pd.read_excel(input_file, converters={'value': str, 'result': str})
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
     result.sort_values(by=['SAP_WH', 'project', 'method_id', 'comment'], inplace=True, ignore_index=True)
     result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at','delivered_at', 'project',
                             'comment']].copy()
 
     extradata_dfs = {sheet_name: extradata.parse(sheet_name) for sheet_name in extradata.sheet_names}
-    result['result'] = result['result'].astype(str)
-    result_simple['result'] = result['result'].astype(str)
     for sheet in extradata_dfs:
         logger.debug(f"sheet={sheet} values: {extradata_dfs[sheet]}")
         extradata_dfs[sheet]['result'] = extradata_dfs[sheet]['result'].astype(str)
@@ -39,5 +37,6 @@ def get_files_data(files: dict):
                                   "shiptor_status": "Статус Шиптора", "returned_at": "Возвращено",
                                   "delivered_at": "Доставлено", "project": "Клиент",
                                   "comment": "Комментарий"}, errors='raise', inplace=True)
+
 
     return {'result': result, 'extradata_dfs': extradata_dfs, 'simple': result_simple}

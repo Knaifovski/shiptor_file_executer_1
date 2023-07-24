@@ -34,7 +34,7 @@ def home(request):
             request.FILES['input'] = settings.FILENAME_FIRST
             result = file_handle.get_files_data({'input': settings.FILENAME_FIRST,
                                                  'extradata': settings.FILENAME_SECOND})
-            logger.debug(result)
+
             with ExcelWriter(settings.FILERESULT) as writer:
                 result['simple'].to_excel(writer, sheet_name='Результат', header=True, index=False)
                 result['result'].to_excel(writer, sheet_name='Подробнее', header=True, index=False)
