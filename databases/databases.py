@@ -114,12 +114,12 @@ class Standby_Shiptor_database(Database_stock):
             logger.error(f"lost packages count {len(packages) - (len(externals) + len(rps))}")
         #########################################################################################
 
-        if len(rps) == 0:
-            rps_e = []
+
         rps_e = self.get_packages_by_id(rps)
-        if len(externals) == 0:
-            rps_e = []
-        externals_e = self.get_packages_by_external(externals)
+        if len(externals) != 0:
+            externals_e = self.get_packages_by_external(externals)
+        else:
+            externals_e = []
         logger.debug(f"all = {rps_e+externals_e}")
         full_data = rps_e+externals_e
         for package in full_data:
