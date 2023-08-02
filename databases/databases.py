@@ -125,7 +125,10 @@ class Standby_Shiptor_database(Database_stock):
         for package in full_data:
             comment = []
             try:
-                package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
+                if package['external_id']:
+                    package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
+                else:
+                    package['SAP_WH'] = settings.SAP_WAREHOUSES[package['value'][0:5]]['sap_wh_id']
             except:
                 package['SAP_WH'] = pd.NA
             if str(package['external_id']).__contains__('*'):
