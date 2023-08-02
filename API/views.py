@@ -43,6 +43,8 @@ class GetPackages(APIView):
             return Response({'result': "Не переданы значения"}, status=status.HTTP_400_BAD_REQUEST)
         logger.debug(f"apiresult = {values}")
         shiptordata = shiptor.get_packages(values)
+        # remove duplicates
+        shiptordata = [dict(t) for t in {tuple(d.items()) for d in shiptordata}]
         df = pd.DataFrame(shiptordata).drop_duplicates(subset=["value"], keep='first')
         df.to_excel(settings.FILENAME_FIRST, header=True, index=False)
         result = "".join([f"{i['result']}\n" for i in shiptordata])
