@@ -1,6 +1,10 @@
 # shiptor_file_executer_1
 Для Поиска и ВПРа значений
 
+Преднастройка:
+Python 3.11 - https://www.python.org/downloads/windows/
+Git(для обновлений) - https://git-scm.com/downloads
+
 Настройка:
 
 1) запустите windows PowerShell в папке
