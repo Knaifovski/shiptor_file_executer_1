@@ -163,10 +163,10 @@ class Standby_Shiptor_database(Database_stock):
                         previouses.append(f"{line['previous_id']}")
                         break
                     else:
-                        result.append(self.shiptor_data_dict(package, **line))
+                        result.append(self.shiptor_data_dict(f"RP{package}", **line))
                         break
             else:
-                result.append(self.shiptor_data_dict(package, comment="Not found in shiptor"))
+                result.append(self.shiptor_data_dict(f"RP{package}", comment="Not found in shiptor"))
         if previouses:
             logger.debug(f"Start get previouses. Previous = {previouses}")
             previouses = self.get_packages_by_id(previouses)
