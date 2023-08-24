@@ -15,7 +15,11 @@ class MergeSerializer(serializers.Serializer):
     def validate(self, attrs):
         logger.debug(f"attrs = {attrs} keys={attrs.keys()}")
         try:
-            attrs['om'] = self.text_to_dict(attrs['om'], ['result', 'ОМ'])
+            attrs['om'] = self.text_to_dict(attrs['om'], ['result', 'Номер отправления', 'Дата ОМ'])
+        except KeyError:
+            pass
+        try:
+            attrs['vp'] = self.text_to_dict(attrs['vp'], ['result', 'ВП'])
         except KeyError:
             pass
         try:
@@ -32,7 +36,7 @@ class MergeSerializer(serializers.Serializer):
     def text_to_dict(self, data: str, fields:list = None):
         data = data.split("\n")
         result = {field: [] for field in fields}
-        print(data)
+        logger.debug(f"data len={len(data)}")
         try:
             i = 0
             while (i < len(data)):

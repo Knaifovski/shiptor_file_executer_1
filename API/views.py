@@ -51,6 +51,7 @@ class GetPackages(APIView):
         return Response({"result": str(result), 'count': {len(values)}}, status=status.HTTP_200_OK)
 
 class MergeData(APIView):
+    """Merge data by api from front-end"""
     def post(self, *args, **kwargs):
         logger.debug(f"args = {args} kwargs = {kwargs}, data={self.request.data}")
         serialzer = MergeSerializer(data=self.request.data)
