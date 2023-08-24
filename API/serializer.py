@@ -23,7 +23,7 @@ class MergeSerializer(serializers.Serializer):
         except KeyError:
             pass
         try:
-            attrs['vvp'] = self.text_to_dict(attrs['vvp'], ['result', 'ВВП'])
+            attrs['vvp'] = self.text_to_dict(attrs['vvp'], ['result', 'дата разгрузки', 'складское действие'])
         except KeyError:
             pass
         try:
