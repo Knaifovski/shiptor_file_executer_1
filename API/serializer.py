@@ -27,7 +27,7 @@ class MergeSerializer(serializers.Serializer):
         except KeyError:
             pass
         try:
-            attrs['smm'] = self.text_to_dict(attrs['smm'], ['result', 'Ответ СММ'])
+            attrs['smm'] = self.text_to_dict(attrs['smm'], ['result', 'Обращение', 'Ответ СММ'])
         except KeyError:
             pass
         return attrs
