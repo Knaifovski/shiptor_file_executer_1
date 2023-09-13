@@ -9,6 +9,7 @@ import pandas as pd
 from API.serializer import MergeSerializer
 from core import config
 from databases.databases import Standby_Shiptor_database
+from executer import file_handle
 
 settings = config.Settings()
 shiptor = Standby_Shiptor_database(host=settings.shiptor_standby_base_host,
@@ -43,6 +44,8 @@ class GetPackages(APIView):
             return Response({'result': "Не переданы значения"}, status=status.HTTP_400_BAD_REQUEST)
         logger.debug(f"apiresult = {values}")
         shiptordata = shiptor.get_packages(values)
+        #first checking
+        shiptordata = file_handle.checking_first(data=shiptordata)
         # remove duplicates
         shiptordata = [dict(t) for t in {tuple(d.items()) for d in shiptordata}]
         df = pd.DataFrame(shiptordata).drop_duplicates(subset=["value"], keep='first')
