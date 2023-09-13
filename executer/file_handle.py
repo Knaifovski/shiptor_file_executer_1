@@ -51,7 +51,7 @@ def get_files_data(files: dict) -> dict:
 
 
 def checking_first(data):
-    """Check packages from database data"""
+    """Check packages from database data and add comments"""
     for package in data:
         comment = []
         if package['project'] not in [101849, 232708]:

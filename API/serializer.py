@@ -15,19 +15,19 @@ class MergeSerializer(serializers.Serializer):
     def validate(self, attrs):
         logger.debug(f"attrs = {attrs} keys={attrs.keys()}")
         try:
-            attrs['om'] = self.text_to_dict(attrs['om'], ['result', 'Номер отправления', 'Дата ОМ'])
+            attrs['om'] = self.text_to_dict(attrs['om'], fields=['result', 'Номер отправления', 'Дата ОМ'])
         except KeyError:
             pass
         try:
-            attrs['vp'] = self.text_to_dict(attrs['vp'], ['result', 'ВП'])
+            attrs['vp'] = self.text_to_dict(attrs['vp'], fields=['result', 'ВП'])
         except KeyError:
             pass
         try:
-            attrs['vvp'] = self.text_to_dict(attrs['vvp'], ['result', 'дата разгрузки', 'складское действие'])
+            attrs['vvp'] = self.text_to_dict(attrs['vvp'], fields=['result', 'дата разгрузки', 'складское действие'])
         except KeyError:
             pass
         try:
-            attrs['smm'] = self.text_to_dict(attrs['smm'], ['result', 'Обращение', 'Ответ СММ'])
+            attrs['smm'] = self.text_to_dict(attrs['smm'], fields=['result', 'Обращение', 'Ответ СММ'])
         except KeyError:
             pass
         return attrs
@@ -56,4 +56,19 @@ class MergeSerializer(serializers.Serializer):
         except Exception as e:
             logger.error(f"Error {e}")
         logger.debug(f"Result = {result}")
-        return result
+        return self.count(result)
+
+    def count(self, data):
+        counter = {}
+        # add values to counter
+        for line in data:
+            if line['external'] in counter.keys():
+                counter[line['external']] += 1
+            else:
+                counter[line['external']] = 1
+        # add counter values to data
+        for line in data:
+            line['count'] = counter[line['external']]
+        return data
+
+
