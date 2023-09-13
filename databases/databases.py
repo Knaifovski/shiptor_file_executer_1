@@ -1,13 +1,7 @@
-# Developed by NickolaQ Trekov
-from datetime import datetime
-import logging
-import re
-
-import pandas as pd
 import psycopg2
 from psycopg2._psycopg import OperationalError
-from core.logging import logger
 
+from core.logging import logger
 from core import config
 
 settings = config.Settings()
@@ -51,7 +45,7 @@ class Database_stock:
                 connection.close()
             except OperationalError as e:
                 logger.error(f"DB: {self.database}|GET| Error: {e}")
-                TRYIES +=1
+                TRYIES += 1
                 # return None
             except TimeoutError:
                 logger.error(f"DB: {self.database}| TIMEOUT ERROR")
@@ -59,9 +53,8 @@ class Database_stock:
                 # return None
             except Exception as e:
                 logger.error(f"DB {self.database}| Error = {e}")
-                TRYIES+=1
+                TRYIES += 1
         return []
-
 
     def get_one(self, query):
         result = self.get(query)
@@ -73,7 +66,7 @@ class Database_stock:
 
 class Standby_Shiptor_database(Database_stock):
 
-    def get_query(self, field:str, packages: str, join="", extfields="", extrawhere: list = None):
+    def get_query(self, field: str, packages: str, join="", extfields="", extrawhere: list = None):
         query = """select p.id, external_id,smt.id as "method_id", sm.name as "method_name", p.current_status,
                 p.returned_at,previous_id, pj.name as "project", return_id, pb.main, pb.surrogate, p.delivered_at
                  {extfields} 
@@ -92,61 +85,40 @@ class Standby_Shiptor_database(Database_stock):
 
     def shiptor_data_dict(self, value, id=None, external_id=None, surrogate=None, main=None, method_id=None,
                           method_name=None, current_status=None, returned_at=None, return_id=None, delivered_at=None,
-                          reception_warehouse_id=None, project=None,comment=None, previous_id=None) -> dict:
+                          reception_warehouse_id=None, project=None, comment=None, previous_id=None) -> dict:
         return {'value': value, 'id': id, 'external_id': external_id, 'surrogate': surrogate, 'main': main,
                 'method_id': method_id, 'method': method_name, 'shiptor_status': current_status,
-                'delivered_at': delivered_at,'returned_at': returned_at, 'return_id': return_id,
-                'reception_warehouse_id': reception_warehouse_id,'project': project, 'previous_id':previous_id,
+                'delivered_at': delivered_at, 'returned_at': returned_at, 'return_id': return_id,
+                'reception_warehouse_id': reception_warehouse_id, 'project': project, 'previous_id': previous_id,
                 'comment': comment}
 
     def get_packages(self, packages: list, prefix: str = None):
-        rps, externals, barcodes, full_data = [], [], [], []
+        """Return database data in list with packages"""
+        rps, externals, full_data = [], [], []
         for package in packages:
             if str(package).upper()[0:2] == 'RP':
                 rps.append(f"{package[2:]}")
             else:
                 externals.append(f"'{str(package).upper()}'")
-        #  logging
+        ############### logging ###############################################################
         logger.debug(f"packages(input) count: {len(packages)}")
         logger.debug(f"package_id(rps) count: {len(rps)} ({len(rps) / len(packages) * 100}%)")
         logger.debug(f"package_id(externals) count: {len(externals)} ({len(externals) / len(packages) * 100}%)")
         if (len(externals) + len(rps)) < len(packages):
-            logger.error(f"lost packages count {len(packages) - (len(externals) + len(rps))}")
+            logger.error(f"Not found packages count: {len(packages) - (len(externals) + len(rps))}")
         #########################################################################################
 
-
-        rps_e = self.get_packages_by_id(rps)
+        # Get packages by id
+        rps_data = self.get_packages_by_id(rps)
         if len(externals) != 0:
-            externals_e = self.get_packages_by_external(externals)
+            # if we have externals numbers
+            externals_data = self.get_packages_by_external(externals)
         else:
-            externals_e = []
-        logger.debug(f"all = {rps_e+externals_e}")
-        full_data = rps_e+externals_e
-        for package in full_data:
-            comment = []
-            try:
-                if package['external_id']:
-                    package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
-                else:
-                    package['SAP_WH'] = settings.SAP_WAREHOUSES[package['value'][0:5]]['sap_wh_id']
-            except:
-                package['SAP_WH'] = pd.NA
-            if str(package['external_id']).__contains__('*'):
-                comment.append("Мерчант")
-            if package['method_id'] in (571, 827, 672):
-                package['result'] = f"RP{package['id']}"
-                if package['delivered_at']:
-                    if package['delivered_at'] > datetime(year=2023, month=6, day=16):
-                        comment.append('Проблема СММ(SHPTRERP-4675)')
-            else:
-                package['result'] = package['external_id']
-                if package['returned_at']:
-                    if package['returned_at'] > datetime(year=2023, month=6, day=16):
-                        comment.append('Проблема СММ(SHPTRERP-4675)')
-            if package['result'] is None:
-                package['result'] = package['value']
-                comment.append(package['comment'])
-            package['comment'] = ",".join(comment)
+            externals_data = []
+        logger.debug(f"all = {rps_data + externals_data}")
+
+        # merge rps and externals datas
+        full_data = rps_data + externals_data
         return full_data
 
     def get_packages_by_id(self, packages: list, field="p.id", extrawhere: list = None) -> list:
@@ -203,7 +175,7 @@ class Standby_Shiptor_database(Database_stock):
         data = self.get(query)
         logger.debug(f"externals shiptor = {data}")
         for package in barcodes:
-            package=package[1:-1]
+            package = package[1:-1]
             for line in data:
                 logger.debug(f"{line['surrogate']} = {package}")
                 if package == line['surrogate']:
