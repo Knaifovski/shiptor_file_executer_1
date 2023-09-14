@@ -56,6 +56,7 @@ def checking_first(data):
         comment = []
         if package['project'] not in [101849, 232708]:
             comment.append('Не относится к СММ')
+            package['result'] = f"RP{package['id']}"
             continue
 
         # status check
@@ -85,7 +86,6 @@ def checking_first(data):
         # Problem checking
         if package['method_id'] in (571, 827, 672):
             package['result'] = f"RP{package['id']}"
-            # Get Problem by date
             if package['delivered_at']:
                 if package['delivered_at'] > datetime(year=2023, month=6, day=16):
                     comment.append('Проблема СММ(SHPTRERP-4675)')
@@ -97,5 +97,4 @@ def checking_first(data):
             package['result'] = package['value']
             comment.append(package['comment']) #what its do?
         package['comment'] = ",".join(comment)
-
     return data
