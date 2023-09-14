@@ -54,6 +54,12 @@ def checking_first(data):
     """Check packages from database data and add comments"""
     for package in data:
         comment = []
+
+        if package['id'] is None:
+            package['result'] = package['value']
+            comment.append("Не найдено в Shiptor")
+            continue
+
         if package['project'] not in [101849, 232708]:
             comment.append('Не относится к СММ')
             package['result'] = f"RP{package['id']}"
