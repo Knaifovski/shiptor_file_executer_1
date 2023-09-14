@@ -56,6 +56,7 @@ def checking_first(data):
         comment = []
         if package['project'] not in [101849, 232708]:
             comment.append('Не относится к СММ')
+            package['result'] = f"RP{package['id']}"
             continue
 
         # status check
