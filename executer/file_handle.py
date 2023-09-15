@@ -31,6 +31,7 @@ def get_files_data(files: dict) -> dict:
     extradata = pd.ExcelFile(files['extradata'])
     result = pd.read_excel(input_file, converters={'value': str, 'result': str})
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
+    print(result.keys())
     result.sort_values(by=['SAP_WH', 'project', 'method_id', 'comment'], inplace=True, ignore_index=True)
     result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
                             'comment']].copy()
@@ -50,7 +51,7 @@ def get_files_data(files: dict) -> dict:
     return {'result': result, 'extradata_dfs': extradata_dfs, 'simple': result_simple}
 
 
-def checking_first(data):
+def checking_first(data: list):
     """Check packages from database data and add comments"""
     for package in data:
         comment = []
@@ -60,17 +61,17 @@ def checking_first(data):
             comment.append("Не найдено в Shiptor")
             continue
 
-        if package['project'] not in [101849, 232708]:
+        if package['project_id'] not in [101849, 232708]:
             comment.append('Не относится к СММ')
             package['result'] = f"RP{package['id']}"
             continue
 
         # status check
-        if package['current_status'] not in ['return_to_sender', 'returned']:
-            if package['current_status'] == 'delivered':
+        if package['shiptor_status'] not in ['return_to_sender', 'returned']:
+            if package['shiptor_status'] == 'delivered':
                 comment.append("Передать на ВОЗВРАТ")
             else:
-                comment.append("[СКЛАД] Принят на склад вне системы")
+                comment.append("[СКЛАД] Принять на склад вне системы")
 
         # easy return
         elif (str(package['external_id'])[0:2] != "RP") and (str(package['external_id']).startswith(('R', "CCS"))):
@@ -98,11 +99,11 @@ def checking_first(data):
                     comment.append('Проблема СММ(SHPTRERP-4675)')
         else:
             package['result'] = package['external_id']
-            if "returned_at" in package.keys() and package['returned_at'] > datetime(year=2023, month=6, day=16):
+            if package['returned_at'] and package['returned_at'] > datetime(year=2023, month=6, day=16):
                 comment.append('Проблема СММ(SHPTRERP-4675)')
         if package['result'] is None:
             package['result'] = package['value']
             comment.append(package['comment']) #what its do?
         package['comment'] = ",".join(comment)
-
+        print(f"COMMENT = {comment}")
     return data
