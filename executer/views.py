@@ -24,6 +24,7 @@ shiptor = Standby_Shiptor_database(host= settings.shiptor_standby_base_host,
 
 
 def home(request):
+    # create folder
     if not os.path.isdir(settings.FILEFOLDER):
         os.mkdir(settings.FILEFOLDER)
     template = 'base.html'
