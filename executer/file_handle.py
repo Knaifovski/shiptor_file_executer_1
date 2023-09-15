@@ -31,7 +31,6 @@ def get_files_data(files: dict) -> dict:
     extradata = pd.ExcelFile(files['extradata'])
     result = pd.read_excel(input_file, converters={'value': str, 'result': str})
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
-    print(result.keys())
     result.sort_values(by=['SAP_WH', 'project', 'method_id', 'comment'], inplace=True, ignore_index=True)
     result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
                             'comment']].copy()

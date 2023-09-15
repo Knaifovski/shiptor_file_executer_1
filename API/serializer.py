@@ -15,25 +15,26 @@ class MergeSerializer(serializers.Serializer):
     def validate(self, attrs):
         logger.debug(f"attrs = {attrs} keys={attrs.keys()}")
         try:
-            attrs['om'] = self.text_to_dict(attrs['om'], fields=['result', 'Номер отправления', 'Дата ОМ'])
+            attrs['om'] = self.text_to_dict(attrs['om'], fields=['result', 'Номер отправления', 'Дата ОМ'], name="ОМ")
         except KeyError:
             pass
         try:
-            attrs['vp'] = self.text_to_dict(attrs['vp'], fields=['result', 'ВП'])
+            attrs['vp'] = self.text_to_dict(attrs['vp'], fields=['result', 'ВП'], name="ВП")
         except KeyError:
             pass
         try:
-            attrs['vvp'] = self.text_to_dict(attrs['vvp'], fields=['result', 'дата разгрузки', 'складское действие'])
+            attrs['vvp'] = self.text_to_dict(attrs['vvp'], fields=['result', 'дата разгрузки', 'складское действие'],
+                                             name="ВВП")
         except KeyError:
             pass
         try:
-            attrs['smm'] = self.text_to_dict(attrs['smm'], fields=['result', 'Обращение', 'Ответ СММ'])
+            attrs['smm'] = self.text_to_dict(attrs['smm'], fields=['result', 'Обращение', 'Ответ СММ'], name="СММ")
         except KeyError:
             pass
         return attrs
 
 
-    def text_to_dict(self, data: str, fields:list = None):
+    def text_to_dict(self, data: str, fields:list = None, name=None):
         data = data.split("\n")
         result = {field: [] for field in fields}
         logger.debug(f"data len={len(data)}")
@@ -56,9 +57,9 @@ class MergeSerializer(serializers.Serializer):
         except Exception as e:
             logger.error(f"Error {e}")
         logger.debug(f"Result = {result}")
-        return self.count(result)
+        return self.count(data=result, name=name)
 
-    def count(self, data):
+    def count(self, data: dict, name=None):
         counter, counter_list = {}, []
         # add values to counter
         for external in data['result']:
@@ -69,7 +70,7 @@ class MergeSerializer(serializers.Serializer):
             # add counter values to data
         for external in data['result']:
             counter_list.append(counter[external])
-        data['количество'] = counter_list
+        data[f'кол-во {name}'] = counter_list
         return data
 
 
