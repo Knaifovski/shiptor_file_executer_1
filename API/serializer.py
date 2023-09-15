@@ -59,16 +59,18 @@ class MergeSerializer(serializers.Serializer):
         return self.count(result)
 
     def count(self, data):
-        counter = {}
+        counter, counter_list = {}, []
         # add values to counter
-        for line in data:
-            if line['external'] in counter.keys():
-                counter[line['external']] += 1
+        for external in data['result']:
+            if external in counter.keys():
+                counter[external] += 1
             else:
-                counter[line['external']] = 1
-        # add counter values to data
-        for line in data:
-            line['count'] = counter[line['external']]
+                counter[external] = 1
+            # add counter values to data
+        for external in data['result']:
+            counter_list.append(counter[external])
+            # line['count'] = counter[line['result']]
+        data['количество'] = counter_list
         return data
 
 
