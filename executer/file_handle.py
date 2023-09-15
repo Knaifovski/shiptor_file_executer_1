@@ -51,9 +51,10 @@ def get_files_data(files: dict) -> dict:
 
 
 def checking_first(data):
-    """Check packages from database data"""
+    """Check packages from database data and add comments"""
     for package in data:
         comment = []
+
         if package['id'] is None:
             package['result'] = package['value']
             comment.append("Не найдено в Shiptor")
@@ -91,6 +92,7 @@ def checking_first(data):
         # Problem checking
         if package['method_id'] in (571, 827, 672):
             package['result'] = f"RP{package['id']}"
+            # Get Problem by date
             if package['delivered_at']:
                 if package['delivered_at'] > datetime(year=2023, month=6, day=16):
                     comment.append('Проблема СММ(SHPTRERP-4675)')
@@ -102,4 +104,5 @@ def checking_first(data):
             package['result'] = package['value']
             comment.append(package['comment']) #what its do?
         package['comment'] = ",".join(comment)
+
     return data
