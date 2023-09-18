@@ -69,7 +69,7 @@ $(document).ready(function () {
   $('#MergeButton').click(function() {
     $("#id_loader").show()
     $.post({
-      data: {'om': $('#OM_data').val(), 'vp': $('#VVP_data').val(), 'vvp': $('#VVP_data').val(), 'smm': $('#SMM_data').val()},
+      data: {'om': $('#OM_data').val(), 'vp': $('#VVP_data').val(), 'vvp': $('#VVP_data').val(),'vvp_status': $('#VVP_status_data').val(), 'smm': $('#SMM_data').val()},
       url: 'api/merge',
       error: function (response) {
         $("#id_loader").hide();
