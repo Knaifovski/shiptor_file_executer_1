@@ -30,6 +30,7 @@ def get_files_data(files: dict) -> dict:
     input_file = files['input']
     extradata = pd.ExcelFile(files['extradata'])
     result = pd.read_excel(input_file, converters={'value': str, 'result': str})
+    checking_second(result)
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
     result.sort_values(by=['SAP_WH', 'project', 'method_id', 'comment'], inplace=True, ignore_index=True)
     result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
@@ -106,3 +107,15 @@ def checking_first(data: list):
         package['comment'] = ",".join(comment)
         print(f"COMMENT = {comment}")
     return data
+
+def checking_second(data: pd.DataFrame):
+    data = data.to_dict()
+    print(f"checking={data}")
+    for package in data['value']:
+        i = 0
+        comment = []
+        if data['external_id'][i] is None:
+            # if package['']
+            comment.append("")
+    # for key, value in data.items():
+    #     print(f"key={key} value={value}")
