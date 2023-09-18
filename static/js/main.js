@@ -38,6 +38,7 @@ $(".modal-cancel").click(function(){
   $("#change_warehouse").hide()
   $("#OM_block").hide()
   $("#VVP_block").hide()
+  $("#VVP_status_block").hide()
   $("#SMM_block").hide()
   $("#modal-bg").hide()
 })
