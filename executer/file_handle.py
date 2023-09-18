@@ -30,7 +30,6 @@ def get_files_data(files: dict) -> dict:
     input_file = files['input']
     extradata = pd.ExcelFile(files['extradata'])
     result = pd.read_excel(input_file, converters={'value': str, 'result': str})
-    checking_second(result)
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
     result.sort_values(by=['SAP_WH', 'project', 'method_id', 'comment'], inplace=True, ignore_index=True)
     result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
@@ -41,6 +40,8 @@ def get_files_data(files: dict) -> dict:
         logger.debug(f"sheet={sheet} values: {extradata_dfs[sheet]}")
         extradata_dfs[sheet]['result'] = extradata_dfs[sheet]['result'].astype(str)
         result = result.merge(extradata_dfs[sheet], on='result', how='left')
+        # add comments to data
+        result = checking_second(result)
         result_simple = result_simple.merge(extradata_dfs[sheet], on='result', how='left')
 
     result_simple.rename(columns={"value": "Изначальное значение", "result": "Значение для САП", "SAP_WH": "Склад САП",
@@ -113,9 +114,19 @@ def checking_second(data: pd.DataFrame):
     print(f"checking={data}")
     for package in data['value']:
         i = 0
-        comment = []
+        comment = str(data['comment'][i]).split(',')
         if data['external_id'][i] is None:
-            # if package['']
-            comment.append("")
-    # for key, value in data.items():
-    #     print(f"key={key} value={value}")
+            #SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
+            if 'кол-во ОМ' not in data.keys() or data['кол-во ОМ'][i] == pd.NaT:
+                comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
+            else:
+                #SKRIPTDLYAOBRAB-33: Проверка. Есть ВВП
+                if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT:
+                    comment.append("[СММ - ВВП ФФ] external_id + номер заказа")
+                else:
+                    #SKRIPTDLYAOBRAB-34: Проверка. ВВП уникально
+                    if data['кол-во ВВП'][i] != 1:
+                        comment.append("[SAP] Несколько ВВП - удалить дубль")
+        data['comment'][i] = ",".join(comment)
+    print(f"updated data = {data}")
+    return data
