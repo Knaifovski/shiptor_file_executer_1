@@ -19,7 +19,7 @@ def get_packages_from_file(file) -> list:
         packages = [str(package) for package in packages]
         return packages
     except Exception as e:
-        logger.error(f"UNEXPECTER ERROR: {e}")
+        logger.error(f"UNEXPECTED ERROR: {e}")
 
 
 
@@ -106,3 +106,6 @@ def checking_first(data: list):
         package['comment'] = ",".join(comment)
         print(f"COMMENT = {comment}")
     return data
+
+def checking_final(data: pd.DataFrame):
+    data = data.to_dict
