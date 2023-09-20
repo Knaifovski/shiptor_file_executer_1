@@ -73,7 +73,7 @@ def get_files_data(files: dict) -> dict:
     return {'result': result, 'extradata_dfs': extradata_dfs, 'simple': result_simple}
 
 
-def checking_first(data: list):
+def checking_first(data: list, request_warehouse=None):
     """Check packages from database data and add comments"""
     for package in data:
         comment = []
@@ -196,7 +196,11 @@ def check_merchant(data, i):
 
 @log
 def check_warehouse_prefix_equal(data, i):
-    return True
+    comment = None
+    if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
+        warehouse_data = settings.SAP_WAREHOUSES[data['external_id'][i][0:5]]
+        if data['warehouse_name'][i] != warehouse_data['shiptor_wh_name']:
+            comment = "[СКЛАД] Засыл"
 
 @log
 def check_status_delivered(data, i):

@@ -69,7 +69,7 @@ class Standby_Shiptor_database(Database_stock):
     def get_query(self, field: str, packages: str, join="", extfields="", extrawhere: list = None):
         query = """select p.id, external_id,smt.id as "method_id", sm.name as "method_name", p.current_status,
                 p.returned_at,previous_id, pj.id as "project_id",pj.name as "project", return_id, pb.main, pb.surrogate,
-                p.delivered_at
+                p.delivered_at, w.name as "warehouse_name"
                  {extfields} 
                  from package p
                  join package_departure pd on p.id = pd.package_id
@@ -77,6 +77,7 @@ class Standby_Shiptor_database(Database_stock):
                  join package_barcode pb on p.id=pb.package_id
                  join shipping.method_tariff smt on pd.shipping_method_tariff_id = smt.id
                  join shipping.method sm on smt.shipping_method_slug = sm.slug
+                 left join warehouse w on p.current_warehouse_id=w.id
                  {join}
                 where {field} in ({packages})""".format(field=field, packages=packages, join=join, extfields=extfields)
         if extrawhere:
@@ -87,12 +88,12 @@ class Standby_Shiptor_database(Database_stock):
     def shiptor_data_dict(self, value, id=None, external_id=None, surrogate=None, main=None, method_id=None,
                           method_name=None, current_status=None, returned_at=None, return_id=None, delivered_at=None,
                           reception_warehouse_id=None,project_id=None, project=None, comment=None,
-                          previous_id=None) -> dict:
+                          previous_id=None, warehouse_name= None) -> dict:
         return {'value': value, 'id': id, 'external_id': external_id, 'surrogate': surrogate, 'main': main,
                 'method_id': method_id, 'method': method_name, 'shiptor_status': current_status,
                 'delivered_at': delivered_at, 'returned_at': returned_at, 'return_id': return_id,
                 'reception_warehouse_id': reception_warehouse_id, 'project_id': project_id, 'project': project,
-                'previous_id': previous_id, 'comment': comment}
+                'previous_id': previous_id, 'warehouse_name': warehouse_name, 'comment': comment}
 
     def get_packages(self, packages: list, prefix: str = None):
         """Return database data in list with packages"""

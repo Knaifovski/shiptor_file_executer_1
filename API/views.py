@@ -25,6 +25,7 @@ class GetPackages(APIView):
     def post(self, *args, **kwargs):
         logger.debug(f" args={args}, kwargs={kwargs} data= {self.request.data}")
         values = split('; |, |\n', self.request.data['packages'])
+        prefix = self.request.data['prefix']
         logger.debug(f"values len = {len(values)}")
 
         try:
@@ -45,7 +46,7 @@ class GetPackages(APIView):
         logger.debug(f"apiresult = {values}")
         shiptordata = shiptor.get_packages(values)
         #first checking
-        shiptordata = file_handle.checking_first(data=shiptordata)
+        shiptordata = file_handle.checking_first(data=shiptordata, request_warehouse=prefix)
         # remove duplicates
         shiptordata = [dict(t) for t in {tuple(d.items()) for d in shiptordata}]
         df = pd.DataFrame(shiptordata).drop_duplicates(subset=["value"], keep='first')
