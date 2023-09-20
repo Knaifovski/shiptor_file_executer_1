@@ -1,3 +1,4 @@
+import functools
 from datetime import datetime
 
 import pandas as pd
@@ -7,6 +8,20 @@ from loguru import logger
 from core.config import Settings
 
 settings = Settings()
+
+def log(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            logger.debug(f"Function {func.__name__} start")
+            result = func(*args, **kwargs)
+            logger.debug(f"Function {func.__name__} success")
+            return result
+        except Exception as e:
+            logger.exception(f"Exception: {str(e)}")
+            raise e
+    return wrapper
+
 
 def get_packages_from_file(file) -> list:
     """return list of dicts package data"""
@@ -20,8 +35,6 @@ def get_packages_from_file(file) -> list:
         return packages
     except Exception as e:
         logger.error(f"UNEXPECTER ERROR: {e}")
-
-
 
 def get_files_data(files: dict) -> dict:
     """Return dictionary with keys: result - merged data, extradata_dfs - extra sheets (om,vp,vvp,etc)
@@ -48,8 +61,9 @@ def get_files_data(files: dict) -> dict:
         result = result.merge(extradata_dfs[sheet], on='result', how='left')
         logger.debug(f"{sheet} merge success")
         # add comments to data
-        result = checking_second(result)
-        result_simple = result_simple.merge(extradata_dfs[sheet], on='result', how='left')
+    result = checking_second(result)
+    result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
+                            'comment']].copy()
 
     result_simple.rename(columns={"value": "Изначальное значение", "result": "Значение для САП", "SAP_WH": "Склад САП",
                                   "shiptor_status": "Статус Шиптора", "returned_at": "Возвращено",
@@ -113,27 +127,140 @@ def checking_first(data: list):
             package['result'] = package['value']
             comment.append(package['comment']) #what its do?
         package['comment'] = ",".join(comment)
-        print(f"COMMENT = {comment}")
     return data
 
+@log
 def checking_second(data: pd.DataFrame):
     data = data.to_dict()
-    print(f"checking={data}")
+    i = 0 #index курсор
     for package in data['value']:
-        i = 0
-        comment = str(data['comment'][i]).split(',')
-        if data['external_id'][i] is None:
+        # comment = str(data['comment'][i]).split(',')
+        comment = []
+        if data['external_id'][i] is pd.NaT or data['external_id'][i] is pd.NA or pd.isna(data['external_id'][i]):
+            # посылка не создана в шипторе
             #SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
+            comment.append("[SHIPTOR] Посылка не создана в shiptor")
             if 'кол-во ОМ' not in data.keys() or data['кол-во ОМ'][i] == pd.NaT:
                 comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
             else:
-                #SKRIPTDLYAOBRAB-33: Проверка. Есть ВВП
-                if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT:
-                    comment.append("[СММ - ВВП ФФ] external_id + номер заказа")
+                comment += check_vvp_ishave(data, i)
+        else:
+            # посылка создана в шипторое
+            is_smm = check_project_issmm(data, i)
+            if is_smm:
+                comment.append(is_smm)
+            is_merchant = check_merchant(data, i)
+            if is_merchant:
+                comment.append(is_merchant)
+            is_has_problem = check_problem(data, i)
+            if is_has_problem:
+                comment.append(is_has_problem)
+            else:
+                easyreturn = check_iseasyreturn(data, i)
+                if easyreturn:
+                    comment += check_vvp_ishave(data, i, easyreturn=True)
                 else:
-                    #SKRIPTDLYAOBRAB-34: Проверка. ВВП уникально
-                    if data['кол-во ВВП'][i] != 1:
-                        comment.append("[SAP] Несколько ВВП - удалить дубль")
+                    status_check = check_status_returned(data, i)
+                    if status_check:
+                        comment.append(status_check)
+                        wh_prefix_equal = check_warehouse_prefix_equal(data, i)
+                        if wh_prefix_equal:
+                            comment += check_vvp_ishave(data, i)
+                        else:
+                            comment.append(wh_prefix_equal)
+                    else:
+                        comment.append(check_status_delivered(data, i))
         data['comment'][i] = ",".join(comment)
-    print(f"updated data = {data}")
-    return data
+        i += 1
+    return pd.DataFrame(data)
+
+@log
+def check_problem(data: dict, i: int):
+    comment = None
+    if data['method_id'][i] in (571, 827, 672):
+        # Get Problem by date
+        if data['delivered_at'][i]:
+            if data['delivered_at'][i] > datetime(year=2023, month=6, day=16):
+                comment = '[Проблема] СММ(SHPTRERP-4675)'
+    else:
+        if data['returned_at'][i] and data['returned_at'][i] > datetime(year=2023, month=6, day=16):
+            comment = '[Проблема] СММ(SHPTRERP-4675)'
+    return comment
+
+@log
+def check_merchant(data, i):
+    comment = None
+    if str(data['external_id'][i]).__contains__("*"):
+        comment = 'Мерчант'
+    return comment
+
+@log
+def check_warehouse_prefix_equal(data, i):
+    return True
+
+@log
+def check_status_delivered(data, i):
+    comment = None
+    if data['shiptor_status'][i] in ('delivered'):
+        comment = f"[СКЛАД] Принять не системно"
+    else:
+        comment = f"[СКЛАД-НА ВОЗВРАТ] передать на сортировку"
+    return comment
+
+@log
+def check_status_returned(data, i):
+    comment = None
+    if data['shiptor_status'][i] in ('returned_to_sender', 'returned'):
+        comment = f"[СТАТУС] {data['shiptor_status']}"
+    return comment
+
+@log
+def check_iseasyreturn(data: dict, i: int):
+    comment = None
+    if (str(data['external_id'][i])[0:2] != "RP") and (str(data['external_id'][i]).startswith(('R', "CCS"))):
+        comment = "Легкий возврат"
+    return comment
+
+@log
+def check_project_issmm(data: dict, i: int):
+    """Проверка. Проект СММ или нет"""
+    comment = None
+    if data['project_id'][i] not in (101849, 232708):
+        comment = "[ПРОЕКТ] Не СММ"
+    return comment
+
+@log
+def check_vvp_ishave(data: dict, i: int, easyreturn=False):
+    # SKRIPTDLYAOBRAB-33: Проверка. Есть ВВП
+    comment = []
+    if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT:
+        if easyreturn:
+            comment.append(f"[СММ - ВВП ЛВ] RP + external_id")
+        else:
+            comment.append(f"[СММ - ВВП ФФ] external_id + номер заказа")
+    else:
+        comment += check_vvp_unique(data, i)
+    return comment
+
+@log
+def check_vvp_unique(data: dict, i: int):
+    """Проверка уникальности ВВП"""
+    # SKRIPTDLYAOBRAB-34: Проверка. ВВП уникально
+    comment = []
+    if data['кол-во ВВП'][i] != 1:
+        comment.append("[SAP] Несколько ВВП - удалить дубль")
+    else:
+        comment.append(check_vvp_status(data, i))
+    return comment
+
+@log
+def check_vvp_status(data: dict, i: int):
+    """Проверка складского действия"""
+    # SKRIPTDLYAOBRAB-26: Проверка. Статус ВВП
+    comment = None
+    if 'складское действие' in data.keys():
+        if str(data['складское действие'][i]).lower() in ('завершено', 'завершено частично'):
+            comment = "[СКЛАД] ВВП уже завершено"
+        else:
+            comment = "[СКЛАД] ВВП создано - проверьте актуальность"
+    return comment
