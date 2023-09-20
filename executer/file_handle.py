@@ -28,25 +28,31 @@ def get_files_data(files: dict) -> dict:
      result_simple - simple_sheet with minimal data"""
     PACKAGES_LIST: list
     input_file = files['input']
+    logger.debug(f"Файл шиптора получен")
     extradata = pd.ExcelFile(files['extradata'])
+    logger.debug(f"Файл с доп значениями прочитан")
     result = pd.read_excel(input_file, converters={'value': str, 'result': str})
+    logger.debug(f"Файл шиптора прочитан")
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
+    logger.debug(f"Файл шиптора - дубликаты удалены")
     result.sort_values(by=['SAP_WH', 'project', 'method_id', 'comment'], inplace=True, ignore_index=True)
+    logger.debug(f"Файл - шиптора удалены дубликаты")
     result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
                             'comment']].copy()
-
+    logger.debug(f"Создан массив для упрощенного отображения в отдельном листе")
     extradata_dfs = {sheet_name: extradata.parse(sheet_name) for sheet_name in extradata.sheet_names}
+    logger.debug(f"Созданы фреймы из доп выгрузок")
     for sheet in extradata_dfs:
-        logger.debug(f"sheet={sheet} values: {extradata_dfs[sheet]}")
+        logger.debug(f"sheet={sheet}")
         extradata_dfs[sheet]['result'] = extradata_dfs[sheet]['result'].astype(str)
         result = result.merge(extradata_dfs[sheet], on='result', how='left')
+        logger.debug(f"{sheet} merge success")
         result_simple = result_simple.merge(extradata_dfs[sheet], on='result', how='left')
 
     result_simple.rename(columns={"value": "Изначальное значение", "result": "Значение для САП", "SAP_WH": "Склад САП",
                                   "shiptor_status": "Статус Шиптора", "returned_at": "Возвращено",
                                   "delivered_at": "Доставлено", "project": "Клиент",
                                   "comment": "Комментарий"}, errors='raise', inplace=True)
-
     return {'result': result, 'extradata_dfs': extradata_dfs, 'simple': result_simple}
 
 
