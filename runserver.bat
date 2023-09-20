@@ -24,5 +24,5 @@ echo Заполните файл .env в соответсвии с данным�
 pause
 )
 :3
-start cmd.exe /c  "git fetch https://github.com/Knaifovski/shiptor_file_executer_1.git master & cd venv\Scripts & activate & cd .. & cd .. & pip install -r requierements.txt & python manage.py runserver"
+start cmd.exe /c  "git fetch https://github.com/Knaifovski/shiptor_file_executer_1.git master & git pull origin master & cd venv\Scripts & activate & cd .. & cd .. & pip install -r requierements.txt & python manage.py runserver"
 
