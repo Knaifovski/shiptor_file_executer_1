@@ -72,7 +72,7 @@ class MergeSerializer(serializers.Serializer):
         except Exception as e:
             logger.error(f"Error {e}")
         logger.debug(f"Result = {result}")
-        if 'external' in result.keys():
+        if 'result' in result.keys():
             result = self.count(data=result, name=name)
         return result
 
