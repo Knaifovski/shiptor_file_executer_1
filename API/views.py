@@ -65,8 +65,11 @@ class MergeData(APIView):
         writer = pd.ExcelWriter(settings.FILENAME_SECOND)
 
         for key in data.keys():
+            print(data.keys())
+            print(data)
+            print(data[key].keys())
             dfs = []
-            dfs.append(pd.DataFrame(data[key], columns=data[key].keys()))
+            dfs.append(pd.DataFrame.from_dict(data[key], orient='index'))
             _ = [A.to_excel(writer, index=False, sheet_name="{0}".format(key)) for i, A in enumerate(dfs)]
         writer.close()
         return Response({"result": data}, status=status.HTTP_200_OK)
