@@ -37,6 +37,7 @@ $("#choose_wh").click(function(){
 $(".modal-cancel").click(function(){
   $("#change_warehouse").hide()
   $("#OM_block").hide()
+  $("#VP_block").hide()
   $("#VVP_block").hide()
   $("#VVP_status_block").hide()
   $("#SMM_block").hide()
