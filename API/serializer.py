@@ -15,39 +15,26 @@ class MergeSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         logger.debug(f"attrs = {attrs} keys={attrs.keys()}")
-        try:
+        if 'om' in attrs.keys():
             attrs['om'] = self.text_to_dict(attrs['om'], fields=['result', 'Номер отправления', 'Дата ОМ'], name="ОМ")
-        except KeyError:
-            pass
-        try:
+        if 'vp' in attrs.keys():
             attrs['vp'] = self.text_to_dict(attrs['vp'], fields=['result', 'ВП'], name="ВП")
-        except KeyError:
-            pass
-        try:
+        if 'vvp' in attrs.keys():
             attrs['vvp'] = self.text_to_dict(attrs['vvp'], fields=['result', 'документ'],
                                              name="ВВП")
-        except KeyError:
-            pass
-        try:
+        if 'vvp_status' in attrs.keys():
             attrs['vvp_status'] = self.text_to_dict(attrs['vvp_status'],
                                                     fields=['документ', 'дата разгрузки', 'складское действие'],
                                                     name="ВВП_статус")
-        except KeyError:
-            pass
-        try:
+        if 'smm' in attrs.keys():
             attrs['smm'] = self.text_to_dict(attrs['smm'], fields=['result', 'Обращение', 'Ответ СММ'], name="СММ")
-        except KeyError:
-            pass
-        if 'vvp_status' in attrs.keys() and 'vvp' in attrs.keys():
-            attrs['vvp'] = attrs['vvp'] | attrs['vvp_status']
-            del attrs['vvp_status']
         logger.debug(f"Attrs keys: {attrs.keys()}")
         return attrs
 
     def text_to_dict(self, data: str, fields:list = None, name=None):
         data = data.split("\n")
         result = {field: [] for field in fields}
-        logger.debug(f"data len={len(data)}")
+        logger.debug(f"data len={len(data)}, fields = {fields}")
         try:
             i = 0
             while (i < len(data)):
@@ -55,12 +42,14 @@ class MergeSerializer(serializers.Serializer):
                 if len(data[i]) < 4:
                     data.remove(data[i])
                     continue
-                delimiters = ["\n", "\t"]
+                delimiters = ["\n", "\t", " "*2]
                 for delimiter in delimiters:
                     line = ";".join(data[i].split(delimiter))
                 line = line.split(";")
-                if len(line) == 1:
-                    line = [data[i], "Да"]
+                logger.debug(f"line = {line}, len = {len(line)}")
+                if len(line) < len(fields):
+                    for idx in range(len(fields)-len(line)):
+                        line.append("Значение не передано")
                 for key in fields:
                     for value in line:
                         result[key].append(value)

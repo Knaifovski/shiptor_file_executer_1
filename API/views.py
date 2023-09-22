@@ -63,13 +63,17 @@ class MergeData(APIView):
         data = serialzer.validated_data
         logger.debug(f"serializer data = {data}")
         writer = pd.ExcelWriter(settings.FILENAME_SECOND)
-
+        if 'vvp_status' in data.keys() and 'vvp' in data.keys():
+            vvp_df = pd.DataFrame(data['vvp'], columns=data['vvp'].keys())
+            vvp_status_df = pd.DataFrame(data['vvp_status'], columns=data['vvp_status'].keys())
+            merged = vvp_df.merge(vvp_status_df, on='документ', how='left')
+            merged.to_excel(writer, index=False, sheet_name="vvp")
+            del data['vvp_status']
+            del data['vvp']
         for key in data.keys():
-            print(data.keys())
-            print(data)
-            print(data[key].keys())
             dfs = []
-            dfs.append(pd.DataFrame.from_dict(data[key], orient='index'))
+            if type(data[key]) == dict:
+                dfs.append(pd.DataFrame(data[key], columns=data[key].keys()))
             _ = [A.to_excel(writer, index=False, sheet_name="{0}".format(key)) for i, A in enumerate(dfs)]
         writer.close()
         return Response({"result": data}, status=status.HTTP_200_OK)
