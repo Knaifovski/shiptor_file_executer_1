@@ -1,4 +1,5 @@
 import datetime
+import re
 
 from django.core.exceptions import ObjectDoesNotExist
 from loguru import logger
@@ -42,10 +43,11 @@ class MergeSerializer(serializers.Serializer):
                 if len(data[i]) < 4:
                     data.remove(data[i])
                     continue
-                delimiters = ["\n", "\t", " "*2]
+                delimiters = ["\t", r'\s{2,}']
                 for delimiter in delimiters:
-                    line = ";".join(data[i].split(delimiter))
-                line = line.split(";")
+                    # line = ";".join(data[i].split(delimiter))
+                    line = ";".join(re.split(delimiter, data[i]))
+                line = line.split("\t")
                 logger.debug(f"line = {line}, len = {len(line)}")
                 if len(line) < len(fields):
                     for idx in range(len(fields)-len(line)):

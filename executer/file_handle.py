@@ -15,7 +15,7 @@ def log(func):
         try:
             logger.debug(f"Function {func.__name__} start")
             result = func(*args, **kwargs)
-            logger.debug(f"Function {func.__name__} success")
+            logger.debug(f"Function {func.__name__} success. Result = {result}")
             return result
         except Exception as e:
             logger.exception(f"Exception: {str(e)}")
@@ -106,7 +106,7 @@ def checking_first(data: list, request_warehouse=None):
             else:
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['value'][0:5]]['sap_wh_id']
         except:
-            package['SAP_WH'] = pd.NA
+            package['SAP_WH'] = None
 
         #if external_id contain "*" then its merchant
         if str(package['external_id']).__contains__('*'):
@@ -143,7 +143,7 @@ def checking_second(data: pd.DataFrame):
             if 'кол-во ОМ' not in data.keys() or data['кол-во ОМ'][i] == pd.NaT:
                 comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
             else:
-                comment += check_vvp_ishave(data, i)
+                comment.append(check_vvp_ishave(data, i))
         else:
             # посылка создана в шипторое
             is_smm = check_project_issmm(data, i)
@@ -158,18 +158,19 @@ def checking_second(data: pd.DataFrame):
             else:
                 easyreturn = check_iseasyreturn(data, i)
                 if easyreturn:
-                    comment += check_vvp_ishave(data, i, easyreturn=True)
+                    comment.append(check_vvp_ishave(data, i, easyreturn=True))
                 else:
                     status_check = check_status_returned(data, i)
                     if status_check:
                         comment.append(status_check)
                         wh_prefix_equal = check_warehouse_prefix_equal(data, i)
                         if wh_prefix_equal:
-                            comment += check_vvp_ishave(data, i)
+                            comment.append(check_vvp_ishave(data, i))
                         else:
                             comment.append(wh_prefix_equal)
                     else:
                         comment.append(check_status_delivered(data, i))
+        print(comment)
         data['comment'][i] = ",".join(comment)
         i += 1
     return pd.DataFrame(data)
@@ -198,9 +199,14 @@ def check_merchant(data, i):
 def check_warehouse_prefix_equal(data, i):
     comment = None
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
-        warehouse_data = settings.SAP_WAREHOUSES[data['external_id'][i][0:5]]
+        print(f"data['SAP_WH'][i]: {data['SAP_WH'][i]}")
+        print(f"external_id: {data['external_id'][i]}")
+        print(f"external_id: {str(data['external_id'][i])[0:5]}")
+        print(f"SAP_WAREHOUSES: {settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]}")
+        warehouse_data = settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]
         if data['warehouse_name'][i] != warehouse_data['shiptor_wh_name']:
             comment = "[СКЛАД] Засыл"
+    return comment
 
 @log
 def check_status_delivered(data, i):
@@ -214,8 +220,8 @@ def check_status_delivered(data, i):
 @log
 def check_status_returned(data, i):
     comment = None
-    if data['shiptor_status'][i] in ('returned_to_sender', 'returned'):
-        comment = f"[СТАТУС] {data['shiptor_status']}"
+    if data['shiptor_status'][i] in ('returned', 'return_to_sender'):
+        comment = f"[СТАТУС] {data['shiptor_status'][i]}"
     return comment
 
 @log
@@ -236,25 +242,25 @@ def check_project_issmm(data: dict, i: int):
 @log
 def check_vvp_ishave(data: dict, i: int, easyreturn=False):
     # SKRIPTDLYAOBRAB-33: Проверка. Есть ВВП
-    comment = []
+    comment = None
     if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT:
         if easyreturn:
-            comment.append(f"[СММ - ВВП ЛВ] RP + external_id")
+            comment = f"[СММ - ВВП ЛВ] RP + external_id"
         else:
-            comment.append(f"[СММ - ВВП ФФ] external_id + номер заказа")
+            comment = f"[СММ - ВВП ФФ] external_id + номер заказа"
     else:
-        comment += check_vvp_unique(data, i)
+        comment = check_vvp_unique(data, i)
     return comment
 
 @log
 def check_vvp_unique(data: dict, i: int):
     """Проверка уникальности ВВП"""
     # SKRIPTDLYAOBRAB-34: Проверка. ВВП уникально
-    comment = []
+    comment = None
     if data['кол-во ВВП'][i] != 1:
-        comment.append("[SAP] Несколько ВВП - удалить дубль")
+        comment = "[SAP] Несколько ВВП - удалить дубль"
     else:
-        comment.append(check_vvp_status(data, i))
+        comment = check_vvp_status(data, i)
     return comment
 
 @log
