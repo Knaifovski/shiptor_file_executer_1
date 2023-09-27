@@ -61,6 +61,7 @@ def get_files_data(files: dict) -> dict:
         result = result.merge(extradata_dfs[sheet], on='result', how='left')
         logger.debug(f"{sheet} merge success")
         # add comments to data
+    result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
     result = checking_second(result)
     result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
                             'comment']].copy()
@@ -77,7 +78,7 @@ def checking_first(data: list, request_warehouse=None):
     """Check packages from database data and add comments"""
     for package in data:
         comment = []
-
+        package['request_warehouse'] = request_warehouse
         if package['id'] is None:
             package['result'] = package['value']
             comment.append("Не найдено в Shiptor")
@@ -152,9 +153,9 @@ def checking_second(data: pd.DataFrame):
             is_merchant = check_merchant(data, i)
             if is_merchant:
                 comment.append(is_merchant)
-            is_has_problem = check_problem(data, i)
-            if is_has_problem:
-                comment.append(is_has_problem)
+            # is_has_problem = check_problem(data, i)
+            # if is_has_problem:
+            #     comment.append(is_has_problem)
             else:
                 easyreturn = check_iseasyreturn(data, i)
                 if easyreturn:
@@ -163,11 +164,11 @@ def checking_second(data: pd.DataFrame):
                     status_check = check_status_returned(data, i)
                     if status_check:
                         comment.append(status_check)
-                        wh_prefix_equal = check_warehouse_prefix_equal(data, i)
-                        if wh_prefix_equal:
-                            comment.append(check_vvp_ishave(data, i))
+                        wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
+                        if wh_prefix_not_equal:
+                            comment.append(wh_prefix_not_equal)
                         else:
-                            comment.append(wh_prefix_equal)
+                            comment.append(check_vvp_ishave(data, i))
                     else:
                         comment.append(check_status_delivered(data, i))
         print(comment)
@@ -196,15 +197,11 @@ def check_merchant(data, i):
     return comment
 
 @log
-def check_warehouse_prefix_equal(data, i):
+def check_warehouse_prefix_not_equal(data, i):
     comment = None
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
-        print(f"data['SAP_WH'][i]: {data['SAP_WH'][i]}")
-        print(f"external_id: {data['external_id'][i]}")
-        print(f"external_id: {str(data['external_id'][i])[0:5]}")
-        print(f"SAP_WAREHOUSES: {settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]}")
         warehouse_data = settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]
-        if data['warehouse_name'][i] != warehouse_data['shiptor_wh_name']:
+        if data['request_warehouse'][i] != warehouse_data['prefix']:
             comment = "[СКЛАД] Засыл"
     return comment
 

@@ -63,11 +63,16 @@ class MergeSerializer(serializers.Serializer):
         except Exception as e:
             logger.error(f"Error {e}")
         logger.debug(f"Result = {result}")
-        if 'result' in result.keys():
-            result = self.count(data=result, name=name)
+        # if 'result' in result.keys():
+        #     result = self.count(data=result, name=name)
+        if name == 'ВВП':
+            result = self.count_vvp(result)
         return result
 
     def count(self, data: dict, name=None):
+        #
+        # Deprecated
+        #
         counter, counter_list = {}, []
         # add values to counter
         for external in data['result']:
@@ -82,4 +87,23 @@ class MergeSerializer(serializers.Serializer):
         logger.debug(f"{name} data: {data}")
         return data
 
-
+    def count_vvp(self, data: dict, name="ВВП"):
+        counter, counter_list = {}, []
+        # add values to counter
+        idx = 0
+        for result in data['result']:
+            if result in counter.keys():
+                if data['документ'][idx] in counter[result].keys():
+                    counter[result][data['документ'][idx]] += 1
+                else:
+                    counter[result][data['документ'][idx]] = 1
+            else:
+                counter[result] = {data['документ'][idx]: 1}
+            idx += 1
+        # add counter values to data
+        idx = 0
+        for result in data['result']:
+            counter_list.append(len(counter[result].keys()))
+            idx += 1
+        data[f'кол-во {name}'] = counter_list
+        return data
