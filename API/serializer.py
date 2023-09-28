@@ -43,11 +43,12 @@ class MergeSerializer(serializers.Serializer):
                 if len(data[i]) < 4:
                     data.remove(data[i])
                     continue
-                delimiters = ["\t", r'\s{2,}']
+                delimiters = ["\t", ',']
+                line = data[i]
                 for delimiter in delimiters:
-                    # line = ";".join(data[i].split(delimiter))
-                    line = ";".join(re.split(delimiter, data[i]))
-                line = line.split("\t")
+                    line = ";".join(line.split(delimiter))
+                line = ";".join(line.split())
+                line = line.split(";")
                 logger.debug(f"line = {line}, len = {len(line)}")
                 if len(line) < len(fields):
                     for idx in range(len(fields)-len(line)):
