@@ -254,7 +254,7 @@ def check_vvp_unique(data: dict, i: int):
     """Проверка уникальности ВВП"""
     # SKRIPTDLYAOBRAB-34: Проверка. ВВП уникально
     comment = None
-    if data['кол-во ВВП'][i] != 1:
+    if not pd.isna(data['кол-во ВВП'][i]) and data['кол-во ВВП'][i] != 1:
         comment = "[SAP] Несколько ВВП - удалить дубль"
     else:
         comment = check_vvp_status(data, i)
