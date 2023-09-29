@@ -163,7 +163,7 @@ def checking_second(data: pd.DataFrame):
                 else:
                     status_check = check_status_returned(data, i)
                     if status_check:
-                        comment.append(status_check)
+                        # comment.append(status_check) Не добавляем статус в коммент
                         wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
                         if wh_prefix_not_equal:
                             comment.append(wh_prefix_not_equal)
