@@ -202,7 +202,7 @@ def check_warehouse_prefix_not_equal(data, i):
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
         warehouse_data = settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]
         if data['request_warehouse'][i] != warehouse_data['prefix']:
-            comment = "[СКЛАД] Засыл"
+            comment = f"[СКЛАД] Засыл, передать в {warehouse_data['shiptor_wh_name']}"
     return comment
 
 @log
