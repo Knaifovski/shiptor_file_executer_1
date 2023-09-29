@@ -240,12 +240,12 @@ def check_project_issmm(data: dict, i: int):
 def check_vvp_ishave(data: dict, i: int, easyreturn=False):
     # SKRIPTDLYAOBRAB-33: Проверка. Есть ВВП
     comment = None
-    if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT:
+    if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT or pd.isna(data['кол-во ВВП'][i]):
         if easyreturn:
-            comment = f"[СММ - ВВП ЛВ] RP{data['external_id'][i]}"
+            comment = f"[СММ - ВВП ЛВ] RP-{data['external_id'][i]}"
         else:
-            if 'Номер отправления' in data[i].keys() and not pd.isna(data['Номер отправления'][i]):
-                comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}{data['Номер отправления'][i]}"
+            if 'Номер отправления' in data.keys() and not pd.isna(data['Номер отправления'][i]):
+                comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}-{data['Номер отправления'][i]}"
             else:
                 comment = "[СММ - ВВП ФФ] external_id + номер заказа"
     else:
