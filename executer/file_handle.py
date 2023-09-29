@@ -150,6 +150,7 @@ def checking_second(data: pd.DataFrame):
             is_smm = check_project_issmm(data, i)
             if is_smm:
                 comment.append(is_smm)
+                continue
             is_merchant = check_merchant(data, i)
             if is_merchant:
                 comment.append(is_merchant)
@@ -233,7 +234,7 @@ def check_project_issmm(data: dict, i: int):
     """Проверка. Проект СММ или нет"""
     comment = None
     if data['project_id'][i] not in (101849, 232708):
-        comment = "[ПРОЕКТ] Не СММ"
+        comment = "[СКЛАД] Не СММ"
     return comment
 
 @log
