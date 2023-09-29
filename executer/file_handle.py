@@ -63,7 +63,7 @@ def get_files_data(files: dict) -> dict:
         # add comments to data
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
     result = checking_second(result)
-    result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
+    result_simple = result[['value', 'result', 'документ', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
                             'comment']].copy()
 
     result_simple.rename(columns={"value": "Изначальное значение", "result": "Значение для САП", "SAP_WH": "Склад САП",
