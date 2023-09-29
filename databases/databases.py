@@ -74,7 +74,7 @@ class Standby_Shiptor_database(Database_stock):
                  from package p
                  join package_departure pd on p.id = pd.package_id
                  join project pj on p.project_id = pj.id
-                 join package_barcode pb on p.id=pb.package_id
+                 left join package_barcode pb on p.id=pb.package_id
                  join shipping.method_tariff smt on pd.shipping_method_tariff_id = smt.id
                  join shipping.method sm on smt.shipping_method_slug = sm.slug
                  left join warehouse w on p.current_warehouse_id=w.id
