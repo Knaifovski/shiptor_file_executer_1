@@ -98,6 +98,8 @@ class Standby_Shiptor_database(Database_stock):
     def get_packages(self, packages: list, prefix: str = None):
         """Return database data in list with packages"""
         rps, externals, full_data = [], [], []
+        rps_data, externals_data = [], []
+
         for package in packages:
             if str(package).upper()[0:2] == 'RP':
                 rps.append(f"{package[2:]}")
@@ -112,13 +114,10 @@ class Standby_Shiptor_database(Database_stock):
         #########################################################################################
 
         # Get packages by id
-        rps_data = self.get_packages_by_id(rps)
-        if len(externals) != 0:
-            # if we have externals numbers
+        if len(rps) > 0:
+            rps_data = self.get_packages_by_id(rps)
+        if len(externals) > 0:
             externals_data = self.get_packages_by_external(externals)
-        else:
-            externals_data = []
-        logger.debug(f"all = {rps_data + externals_data}")
 
         # merge rps and externals datas
         full_data = rps_data + externals_data
@@ -164,7 +163,7 @@ class Standby_Shiptor_database(Database_stock):
                     break
             else:
                 barcodes.append(package)
-        if barcodes:
+        if len(barcodes) > 0:
             barcodes = self.get_packages_by_barcode(barcodes)
         result += barcodes
         logger.debug(f"ext len={len(result)}")
