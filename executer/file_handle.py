@@ -100,10 +100,11 @@ def checking_first(data: list, request_warehouse=None):
         if str(package['external_id']).__contains__('*'):
             comment.append("Мерчант")
 
-        if package['result'] is None:
+        if 'result' not in package.keys() or package['result'] is None:
             package['result'] = package['value']
             comment.append(package['comment']) #what its do?
-        package['comment'] = ",".join(comment)
+        if len(comment) > 1:
+            package['comment'] = ",".join(comment)
     return data
 
 @log
