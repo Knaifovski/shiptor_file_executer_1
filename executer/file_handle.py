@@ -87,22 +87,6 @@ def checking_first(data: list, request_warehouse=None):
             comment.append("Не найдено в Shiptor")
             continue
 
-        if package['project_id'] not in [101849, 232708]:
-            comment.append('Не относится к СММ')
-            package['result'] = f"RP{package['id']}"
-            continue
-
-        # status check
-        if package['shiptor_status'] not in ['return_to_sender', 'returned']:
-            if package['shiptor_status'] == 'delivered':
-                comment.append("Передать на ВОЗВРАТ")
-            else:
-                comment.append("[СКЛАД] Принять на склад вне системы")
-
-        # easy return
-        elif (str(package['external_id'])[0:2] != "RP") and (str(package['external_id']).startswith(('R', "CCS"))):
-            comment.append("Легкий возврат")
-
         # get sap warehouse id
         try:
             if package['external_id']:
@@ -116,17 +100,6 @@ def checking_first(data: list, request_warehouse=None):
         if str(package['external_id']).__contains__('*'):
             comment.append("Мерчант")
 
-        # Problem checking
-        if package['method_id'] in (571, 827, 672):
-            package['result'] = f"RP{package['id']}"
-            # Get Problem by date
-            if package['delivered_at']:
-                if package['delivered_at'] > datetime(year=2023, month=6, day=16):
-                    comment.append('Проблема СММ(SHPTRERP-4675)')
-        else:
-            package['result'] = package['external_id']
-            if package['returned_at'] and package['returned_at'] > datetime(year=2023, month=6, day=16):
-                comment.append('Проблема СММ(SHPTRERP-4675)')
         if package['result'] is None:
             package['result'] = package['value']
             comment.append(package['comment']) #what its do?
@@ -140,7 +113,7 @@ def checking_second(data: pd.DataFrame):
     for package in data['value']:
         # comment = str(data['comment'][i]).split(',')
         comment = []
-        if data['external_id'][i] is pd.NaT or data['external_id'][i] is pd.NA or pd.isna(data['external_id'][i]):
+        if data['id'][i] is pd.NA or pd.isna(data['external_id'][i]):
             # посылка не создана в шипторе
             #SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
             comment.append("[SHIPTOR] Посылка не создана в shiptor")
@@ -204,9 +177,12 @@ def check_merchant(data, i):
 def check_warehouse_prefix_not_equal(data, i):
     comment = None
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
-        warehouse_data = settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]
-        if data['request_warehouse'][i] != warehouse_data['prefix']:
-            comment = f"[СКЛАД] Засыл, передать в {warehouse_data['shiptor_wh_name']}"
+        try:
+            warehouse_data = settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]
+            if data['request_warehouse'][i] != warehouse_data['prefix']:
+                comment = f"[СКЛАД] Засыл, передать в {warehouse_data['shiptor_wh_name']}"
+        except KeyError as e:
+            comment = f"[APP] Не найдено склада SAP с значением {e.args}"
     return comment
 
 @log
