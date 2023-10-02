@@ -179,7 +179,7 @@ def check_warehouse_prefix_not_equal(data, i):
     comment = None
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
         try:
-            warehouse_data = settings.SAP_WAREHOUSES[str(data['external_id'][i])[0:5]]
+            warehouse_data = settings.SAP_WAREHOUSES[str(int(data['external_id'][i]))[0:5]]
             if data['request_warehouse'][i] != warehouse_data['prefix']:
                 comment = f"[СКЛАД] Засыл, передать в {warehouse_data['shiptor_wh_name']}"
         except KeyError as e:
