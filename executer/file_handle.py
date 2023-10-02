@@ -50,8 +50,6 @@ def get_files_data(files: dict) -> dict:
     logger.debug(f"Файл шиптора - дубликаты удалены")
     result.sort_values(by=['SAP_WH', 'project', 'method_id', 'comment'], inplace=True, ignore_index=True)
     logger.debug(f"Файл - шиптора удалены дубликаты")
-    result_simple = result[['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
-                            'comment']].copy()
     logger.debug(f"Создан массив для упрощенного отображения в отдельном листе")
     extradata_dfs = {sheet_name: extradata.parse(sheet_name) for sheet_name in extradata.sheet_names}
     logger.debug(f"Созданы фреймы из доп выгрузок")
@@ -63,8 +61,13 @@ def get_files_data(files: dict) -> dict:
         # add comments to data
     result.drop_duplicates(subset='result', inplace=True, ignore_index=True)
     result = checking_second(result)
-    result_simple = result[['value', 'result', 'документ', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
-                            'comment']].copy()
+    if 'документ' in result.columns:
+        result_simple = result[['value', 'result', 'документ', 'SAP_WH', 'shiptor_status', 'returned_at',
+                                'delivered_at', 'project', 'comment']].copy()
+    else:
+        result_simple = result[
+            ['value', 'result', 'SAP_WH', 'shiptor_status', 'returned_at', 'delivered_at', 'project',
+             'comment']].copy()
 
     result_simple.rename(columns={"value": "Изначальное значение", "result": "Значение для САП", "SAP_WH": "Склад САП",
                                   "shiptor_status": "Статус Шиптора", "returned_at": "Возвращено",
