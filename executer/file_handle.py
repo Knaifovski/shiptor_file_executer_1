@@ -133,17 +133,16 @@ def checking_second(data: pd.DataFrame):
                 comment.append(check_vvp_ishave(data, i))
         else:
             # посылка создана в шипторое
-            is_smm = check_project_issmm(data, i)
-            if is_smm:
-                comment.append(is_smm)
-                continue
-            is_merchant = check_merchant(data, i)
-            if is_merchant:
-                comment.append(is_merchant)
-            # is_has_problem = check_problem(data, i)
-            # if is_has_problem:
-            #     comment.append(is_has_problem)
+            is_not_smm = check_project_is_not_smm(data, i)
+            if is_not_smm:
+                comment.append(is_not_smm)
             else:
+                is_merchant = check_merchant(data, i)
+                # if is_merchant:
+                #     comment.append(is_merchant)
+                # is_has_problem = check_problem(data, i)
+                # if is_has_problem:
+                #     comment.append(is_has_problem)
                 easyreturn = check_iseasyreturn(data, i)
                 if easyreturn:
                     comment.append(check_vvp_ishave(data, i, easyreturn=True))
@@ -220,7 +219,7 @@ def check_iseasyreturn(data: dict, i: int):
     return comment
 
 @log
-def check_project_issmm(data: dict, i: int):
+def check_project_is_not_smm(data: dict, i: int):
     """Проверка. Проект СММ или нет"""
     comment = None
     if data['project_id'][i] not in (101849, 232708):
@@ -238,7 +237,7 @@ def check_vvp_ishave(data: dict, i: int, easyreturn=False):
             if 'Номер отправления' in data.keys() and not pd.isna(data['Номер отправления'][i]):
                 comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}-{data['Номер отправления'][i]}"
             else:
-                comment = "[СММ - ВВП ФФ] external_id + номер заказа"
+                comment = "[СММ - ВВП ФФ] external_id + номер заказа (значения не переданы)"
     else:
         comment = check_vvp_unique(data, i)
     return comment
