@@ -164,7 +164,7 @@ class Standby_Shiptor_database(Database_stock):
         for package in externals:
             for line in data:
                 if package == line['external_id'].upper():
-                    result.append(self.shiptor_data_dict(package[1:-1], **line))
+                    result.append(self.shiptor_data_dict(package, **line))
                     break
             else:
               barcodes.append(package)
