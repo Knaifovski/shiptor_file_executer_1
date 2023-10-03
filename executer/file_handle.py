@@ -55,6 +55,7 @@ def get_files_data(files: dict) -> dict:
     logger.debug(f"Созданы фреймы из доп выгрузок")
     for sheet in extradata_dfs:
         logger.debug(f"sheet={sheet}")
+        logger.debug(f"sheet={extradata_dfs[sheet]}")
         extradata_dfs[sheet]['result'] = extradata_dfs[sheet]['result'].astype(str)
         result = result.merge(extradata_dfs[sheet], on='result', how='left')
         logger.debug(f"{sheet} merge success")
@@ -126,7 +127,7 @@ def checking_second(data: pd.DataFrame):
             # посылка не создана в шипторе
             #SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
             comment.append("[SHIPTOR] Посылка не создана в shiptor")
-            if 'кол-во ОМ' not in data.keys() or data['кол-во ОМ'][i] == pd.NaT:
+            if 'Дата ОМ' not in data.keys() or pd.isna(data['Дата ОМ'][i]):
                 comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
             else:
                 comment.append(check_vvp_ishave(data, i))
