@@ -79,6 +79,7 @@ def get_files_data(files: dict) -> dict:
 
 def checking_first(data: list, request_warehouse=None):
     """Check packages from database data and add comments"""
+    idx = 0
     for package in data:
         comment = []
         package['request_warehouse'] = request_warehouse
@@ -90,21 +91,28 @@ def checking_first(data: list, request_warehouse=None):
         # get sap warehouse id
         try:
             if package['external_id']:
+                # easy return
+                if (str(package['external_id'])[0:2] != "RP") and (str(package['external_id']).startswith(('R', "CCS"))):
+                    logger.debug("Легкий возврат")
+                    package['result'] = package['external_id']
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
             else:
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['value'][0:5]]['sap_wh_id']
         except:
             package['SAP_WH'] = None
 
+
+
+
         #if external_id contain "*" then its merchant
-        if str(package['external_id']).__contains__('*'):
-            comment.append("Мерчант")
+        # if str(package['external_id']).__contains__('*'):
+        #     comment.append("Мерчант")
 
         if 'result' not in package.keys() or package['result'] is None:
             package['result'] = package['value']
-            comment.append(package['comment']) #what its do?
         if len(comment) > 1:
             package['comment'] = ",".join(comment)
+        idx += 1
     return data
 
 @log
@@ -179,6 +187,7 @@ def check_warehouse_prefix_not_equal(data, i):
     comment = None
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
         try:
+            logger.debug(f"{str(int(data['external_id'][i]))[0:5]}")
             warehouse_data = settings.SAP_WAREHOUSES[str(int(data['external_id'][i]))[0:5]]
             if data['request_warehouse'][i] != warehouse_data['prefix']:
                 comment = f"[СКЛАД] Засыл, передать в {warehouse_data['shiptor_wh_name']}"
