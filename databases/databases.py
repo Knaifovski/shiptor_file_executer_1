@@ -104,7 +104,7 @@ class Standby_Shiptor_database(Database_stock):
             if str(package).upper()[0:2] == 'RP':
                 rps.append(f"{package[2:]}")
             else:
-                externals.append(f"'{str(package).upper()}'")
+                externals.append(str(package).upper())
         ############### logging ###############################################################
         logger.debug(f"packages(input) count: {len(packages)}")
         logger.debug(f"package_id(rps) count: {len(rps)} ({len(rps) / len(packages) * 100}%)")
@@ -151,18 +151,20 @@ class Standby_Shiptor_database(Database_stock):
 
     def get_packages_by_external(self, externals: list) -> list:
         result, packages_string, barcodes = [], [], []
-        packages_string = ",".join(externals)
+        packages_string = ",".join([f"\'{package}\'" for package in externals])
         conditions = [{'condition': "p.previous_id", 'operator': "is", 'values': "null"}]
         query = self.get_query("UPPER(p.external_id)", packages_string, extrawhere=conditions)
         data = self.get(query)
         logger.debug(f"externals shiptor len = {len(data)}")
         for package in externals:
             for line in data:
-                if package[1:-1] == line['external_id']:
+                if package == line['external_id'].upper():
                     result.append(self.shiptor_data_dict(package[1:-1], **line))
-                    break
-            else:
-                barcodes.append(package)
+                    logger.debug('result appended')
+                    continue
+                else:
+                    logger.debug('barcodes appended')
+                    barcodes.append(package)
         if len(barcodes) > 0:
             barcodes = self.get_packages_by_barcode(barcodes)
         result += barcodes
