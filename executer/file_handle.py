@@ -232,7 +232,7 @@ def check_vvp_ishave(data: dict, i: int, easyreturn=False):
     comment = None
     if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT or pd.isna(data['кол-во ВВП'][i]):
         if easyreturn:
-            comment = f"[СММ - ВВП ЛВ] RP{data['id'][i]}-{data['external_id'][i]}"
+            comment = f"[СММ - ВВП ЛВ] RP{int(data['id'][i])}-{data['external_id'][i]}"
         else:
             if 'Номер отправления' in data.keys() and not pd.isna(data['Номер отправления'][i]):
                 comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}-{data['Номер отправления'][i]}"
