@@ -121,6 +121,9 @@ class Standby_Shiptor_database(Database_stock):
 
         # merge rps and externals datas
         full_data = rps_data + externals_data
+        if len(full_data) == 0:
+            for package in packages:
+                full_data.append(self.shiptor_data_dict(value=package))
         return full_data
 
     def get_packages_by_id(self, packages: list, field="p.id", extrawhere: list = None) -> list:
@@ -156,30 +159,29 @@ class Standby_Shiptor_database(Database_stock):
         query = self.get_query("UPPER(p.external_id)", packages_string, extrawhere=conditions)
         data = self.get(query)
         logger.debug(f"externals shiptor len = {len(data)}")
+        logger.debug(externals)
+        logger.debug(data)
         for package in externals:
             for line in data:
                 if package == line['external_id'].upper():
                     result.append(self.shiptor_data_dict(package[1:-1], **line))
-                    logger.debug('result appended')
-                    continue
-                else:
-                    logger.debug('barcodes appended')
-                    barcodes.append(package)
+                    break
+            else:
+              barcodes.append(package)
         if len(barcodes) > 0:
             barcodes = self.get_packages_by_barcode(barcodes)
         result += barcodes
-        logger.debug(f"ext len={len(result)}")
         return result
 
     def get_packages_by_barcode(self, barcodes: list) -> list:
         result, packages_string = [], []
-        packages_string = ",".join(barcodes)
+        packages_string = ",".join([f"\'{package}\'" for package in barcodes])
         conditions = [{'condition': "p.previous_id", 'operator': "is", 'values': "null"}]
         query = self.get_query("UPPER(pb.surrogate)", packages_string, extrawhere=conditions)
         data = self.get(query)
         logger.debug(f"externals shiptor = {data}")
         for package in barcodes:
-            package = package[1:-1]
+            package = package
             for line in data:
                 logger.debug(f"{line['surrogate']} = {package}")
                 if package == line['surrogate']:
