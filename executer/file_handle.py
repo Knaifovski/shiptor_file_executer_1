@@ -93,9 +93,10 @@ def checking_first(data: list, request_warehouse=None):
         try:
             if package['external_id']:
                 # easy return
-                if (str(package['external_id'])[0:2] != "RP") and (str(package['external_id']).startswith(('R', "CCS"))):
-                    logger.debug("Легкий возврат")
-                    package['result'] = package['external_id']
+                if not str(package['external_id']).startswith("RP") and (
+                        str(package['external_id']).startswith(('R', "CCS"))):
+                    logger.debug("Easy Return")
+                    package['result'] = f"RP{package['id']}"
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
             else:
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['value'][0:5]]['sap_wh_id']
@@ -147,16 +148,20 @@ def checking_second(data: pd.DataFrame):
                 if easyreturn:
                     comment.append(check_vvp_ishave(data, i, easyreturn=True))
                 else:
-                    status_check = check_status_returned(data, i)
-                    if status_check:
-                        # comment.append(status_check) Не добавляем статус в коммент
-                        wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
-                        if wh_prefix_not_equal:
-                            comment.append(wh_prefix_not_equal)
-                        else:
-                            comment.append(check_vvp_ishave(data, i))
+                    wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
+                    # external_id пустой, название товара или RP
+                    if wh_prefix_not_equal is None and len(data['external_id'][i])!=18:
+                        comment.append("[Ручной разбор]")
                     else:
-                        comment.append(check_status_delivered(data, i))
+                        status_check = check_status_returned(data, i)
+                        if status_check:
+                            # comment.append(status_check) Не добавляем статус в коммент
+                            if wh_prefix_not_equal:
+                                comment.append(wh_prefix_not_equal)
+                            else:
+                                comment.append(check_vvp_ishave(data, i))
+                        else:
+                            comment.append(check_status_delivered(data, i))
         print(comment)
         data['comment'][i] = ",".join(comment)
         i += 1
@@ -219,6 +224,12 @@ def check_iseasyreturn(data: dict, i: int):
     return comment
 
 @log
+def check_easy_external(data: dict, i:int):
+    comment = None
+    if (len(data['external_id'][i])==18):
+        pass
+
+@log
 def check_project_is_not_smm(data: dict, i: int):
     """Проверка. Проект СММ или нет"""
     comment = None
@@ -235,7 +246,7 @@ def check_vvp_ishave(data: dict, i: int, easyreturn=False):
             comment = f"[СММ - ВВП ЛВ] RP{int(data['id'][i])}-{data['external_id'][i]}"
         else:
             if 'Номер отправления' in data.keys() and not pd.isna(data['Номер отправления'][i]):
-                comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}-{data['Номер отправления'][i]}"
+                comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}-{int(data['Номер отправления'][i])}"
             else:
                 comment = "[СММ - ВВП ФФ] external_id + номер заказа (значения не переданы)"
     else:
