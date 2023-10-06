@@ -82,6 +82,7 @@ def checking_first(data: list, request_warehouse=None):
     """Check packages from database data and add comments"""
     idx = 0
     for package in data:
+        logger.info(f"Package = {package}")
         comment = []
         package['request_warehouse'] = request_warehouse
         if package['id'] is None:
@@ -95,8 +96,10 @@ def checking_first(data: list, request_warehouse=None):
                 # easy return
                 if not str(package['external_id']).startswith("RP") and (
                         str(package['external_id']).startswith(('R', "CCS"))):
-                    logger.debug("Easy Return")
+                    comment.append("Easy Return")
                     package['result'] = f"RP{package['id']}"
+                else:
+                    package['result'] = package['external_id']
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['external_id'][0:5]]['sap_wh_id']
             else:
                 package['SAP_WH'] = settings.SAP_WAREHOUSES[package['value'][0:5]]['sap_wh_id']
@@ -109,7 +112,6 @@ def checking_first(data: list, request_warehouse=None):
         #if external_id contain "*" then its merchant
         # if str(package['external_id']).__contains__('*'):
         #     comment.append("Мерчант")
-
         if 'result' not in package.keys() or package['result'] is None:
             package['result'] = package['value']
         if len(comment) > 1:
