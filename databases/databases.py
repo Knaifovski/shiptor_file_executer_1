@@ -65,7 +65,6 @@ class Database_stock:
 
 
 class Standby_Shiptor_database(Database_stock):
-
     def get_query(self, field: str, packages: str, join="", extfields="", extrawhere: list = None):
         query = """select p.id, external_id,smt.id as "method_id", sm.name as "method_name", p.current_status,
                 p.returned_at,previous_id, pj.id as "project_id",pj.name as "project", return_id, pb.main, pb.surrogate,
@@ -127,7 +126,8 @@ class Standby_Shiptor_database(Database_stock):
         return full_data
 
     def get_packages_by_id(self, packages: list, field="p.id", extrawhere: list = None) -> list:
-        result, packages_string, previouses = [], [], []
+        result, packages_string = [], []
+        previouses = {'prev': [], 'values': []}
         logger.debug(f"packages: {packages}")
         packages_string = ",".join(packages)
         query = self.get_query(field, packages_string, extrawhere=extrawhere)
@@ -137,18 +137,20 @@ class Standby_Shiptor_database(Database_stock):
             for line in data:
                 if int(package) == line['id']:
                     if line['previous_id']:
-                        previouses.append(f"{line['previous_id']}")
+                        previouses['prev'].append(str(line['previous_id']))
+                        previouses['values'].append(f"RP{package}")
                         break
                     else:
                         result.append(self.shiptor_data_dict(f"RP{package}", **line))
                         break
             else:
                 result.append(self.shiptor_data_dict(f"RP{package}", comment="Not found in shiptor"))
-        if previouses:
-            logger.debug(f"Start get previouses. Previous = {previouses}")
-            previouses = self.get_packages_by_id(previouses)
-            logger.debug(f"Finish get prviouses")
-            result += previouses
+        if len(previouses['prev']) > 0:
+            previouses_data = self.get_packages_by_previous(previouses['prev'], previouses['values'])
+        #     logger.debug(f"Start get previouses. Previous = {previouses}")
+        #     previouses = self.get_packages_by_id(previouses)
+        #     logger.debug(f"Finish get prviouses")
+            result += previouses_data
         logger.debug(f"result len = {len(result)}")
         return result
 
@@ -191,3 +193,14 @@ class Standby_Shiptor_database(Database_stock):
                 result.append(self.shiptor_data_dict(package, comment="Not found in shiptor"))
         logger.debug(f"ext len={len(result)}")
         return result
+
+    def get_packages_by_previous(self, previouses: list, values: list):
+        packages = self.get_packages_by_id(previouses)
+        if len(values) != len(previouses):
+            discr = f"len(values) != len(previouses)"
+            logger.error(discr)
+            raise ValueError(discr)
+        logger.debug(packages)
+        for idx in range(0, len(values)):
+            packages[idx]['value'] = values[idx]
+        return packages
