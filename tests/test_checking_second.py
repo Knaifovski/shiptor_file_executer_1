@@ -78,20 +78,35 @@ class TestCase_with_VVP_uniq(TestCase_1):
     'Дата ОМ': {0: pd.NA}
     }
 
-
-    def __init__(self):
-        self.data = TestCase_with_VVP_uniq.data
-
     def test_check_vvp_ishave(self):
         assert file_handle.check_vvp_ishave(self.data, i=0) == "[СКЛАД] ВВП уже завершено"
 
-class TestCase_with_VVP_notunique(TestCase_with_VVP_uniq):
+class TestCase_with_VVP_notunique():
     data = {
-        'кол-во ВВП': {0: 2}
+        'value': {0: 'TEST_CASE_1'},
+        'id': {0: 556193482},
+        'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
+        'external_id': {0: 586921800000004555},
+        'method_id': {0: 482},
+        'shiptor_status': {0: 'return_to_sender'},
+        'delivered_at': {0: pd.NA},
+        'project_id': {0: 101849},
+        'warehouse_name': {0: 'Хабаровск'},
+        'comment': {0: pd.NA},
+        'request_warehouse': {0: 12357},
+        'result': {0: '586921800000004555'},
+        'SAP_WH': {0: 8000},
+        # VVP
+        'кол-во ВВП': {0: '2'},
+        'складское действие': {0: 'завершено'},  # 'завершено', 'завершено частично', else
+        # OM
+        'Номер отправления': {0: pd.NA},
+        'Дата ОМ': {0: pd.NA}
     }
 
     def test_check_vvp_is_have(self):
         assert file_handle.check_vvp_ishave(self.data, i=0) == "[SAP] Несколько ВВП - удалить дубль"
+
 
 
 
@@ -125,8 +140,6 @@ def checking(data: dict, idx = 0):
                     else:
                         is_returned = file_handle.check_status_isreturned(data, i)
                         if is_returned:
-                            if wh_prefix_not_equal:
-                                comment.append(wh_prefix_not_equal)
                             if wh_prefix_not_equal:
                                 comment.append(wh_prefix_not_equal)
                             else:
@@ -175,8 +188,10 @@ def test_is_smm():
 def test_3():
     extrdata = {'external_id': "RP2221115354354355"}
     data = data_generator(extrdata)
+    print(checking(data))
+    print(f"[APP] Не найдено склада SAP с значением {data['external_id'][0]}")
     assert checking(data) == f"[APP] Не найдено склада SAP с значением {data['external_id'][0]}"
-    extrdata = {'external_id': "CRCCS222111"}
+    extrdata = {'external_id': "CRCCS2221100000001"}
     data = data_generator(extrdata)
     assert checking(data) == f"[APP] Не найдено склада SAP с значением {data['external_id'][0]}"
     # Легкий возврат

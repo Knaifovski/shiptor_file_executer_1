@@ -160,8 +160,6 @@ def checking_second(data: pd.DataFrame):
                         if is_returned:
                             if wh_prefix_not_equal:
                                 comment.append(wh_prefix_not_equal)
-                            if wh_prefix_not_equal:
-                                comment.append(wh_prefix_not_equal)
                             else:
                                 comment.append(check_vvp_ishave(data, i))
                         else:
