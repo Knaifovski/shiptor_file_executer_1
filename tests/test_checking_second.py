@@ -121,7 +121,7 @@ def checking(data: dict, idx = 0):
                 else:
                     wh_prefix_not_equal = file_handle.check_warehouse_prefix_not_equal(data, i)
                     # external_id пустой, название товара или RP
-                    if wh_prefix_not_equal is None and len(str(data['external_id'][i])) != 18:
+                    if len(str(data['external_id'][i])) != 18:
                         comment.append("[Ручной разбор]")
                     else:
                         status_check = file_handle.check_status_returned(data, i)
@@ -214,6 +214,9 @@ def test_4_easy_return():
     assert checking(data) == '[СКЛАД] ВВП создано - проверьте актуальность'
 
 def test_5_not_found_in_shiptor():
+    extrdata = {'id': pd.NA, 'external_id': 1556, 'складское действие': 'другой'}
+    data = data_generator(extrdata)
+    assert checking(data) == '[Ручной разбор]'
     extrdata = {'id': pd.NA, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor'

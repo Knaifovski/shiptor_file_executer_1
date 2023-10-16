@@ -154,7 +154,7 @@ def checking_second(data: pd.DataFrame):
                 else:
                     wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
                     # external_id пустой, название товара или RP
-                    if wh_prefix_not_equal is None and len(str(data['external_id'][i]))!=18:
+                    if len(str(data['external_id'][i]))!=18:
                         comment.append("[Ручной разбор]")
                     else:
                         status_check = check_status_returned(data, i)
