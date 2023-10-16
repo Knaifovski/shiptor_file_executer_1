@@ -43,7 +43,7 @@ class TestCase_1:
         assert file_handle.check_status_delivered(self.data, i=0) == f"[СКЛАД-НА ВОЗВРАТ] передать на сортировку"
 
     def test_check_status_returned(self):
-        assert file_handle.check_status_returned(self.data, i=0) != None
+        assert file_handle.check_status_isreturned(self.data, i=0) != None
 
     def test_check_iseasyreturn(self):
         assert file_handle.check_iseasyreturn(self.data, i=0) == None
@@ -120,13 +120,13 @@ def checking(data: dict, idx = 0):
                     comment.append(file_handle.check_vvp_ishave(data, i, easyreturn=True))
                 else:
                     wh_prefix_not_equal = file_handle.check_warehouse_prefix_not_equal(data, i)
-                    # external_id пустой, название товара или RP
-                    if len(str(data['external_id'][i])) != 18:
+                    if len(str(data['external_id'][i])) != 18 and wh_prefix_not_equal:
                         comment.append("[Ручной разбор]")
                     else:
-                        status_check = file_handle.check_status_returned(data, i)
-                        if status_check:
-                            # comment.append(status_check) Не добавляем статус в коммент
+                        is_returned = file_handle.check_status_isreturned(data, i)
+                        if is_returned:
+                            if wh_prefix_not_equal:
+                                comment.append(wh_prefix_not_equal)
                             if wh_prefix_not_equal:
                                 comment.append(wh_prefix_not_equal)
                             else:
@@ -173,7 +173,7 @@ def test_is_smm():
     assert checking(data) == '[СКЛАД] Не СММ'
 
 def test_3():
-    extrdata = {'external_id': "RP222111"}
+    extrdata = {'external_id': "RP2221115354354355"}
     data = data_generator(extrdata)
     assert checking(data) == f"[APP] Не найдено склада SAP с значением {data['external_id'][0]}"
     extrdata = {'external_id': "CRCCS222111"}
@@ -214,9 +214,6 @@ def test_4_easy_return():
     assert checking(data) == '[СКЛАД] ВВП создано - проверьте актуальность'
 
 def test_5_not_found_in_shiptor():
-    extrdata = {'id': pd.NA, 'external_id': 1556, 'складское действие': 'другой'}
-    data = data_generator(extrdata)
-    assert checking(data) == '[Ручной разбор]'
     extrdata = {'id': pd.NA, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor'
@@ -230,9 +227,10 @@ def test_5_not_found_in_shiptor():
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
 
 def test_6_left():
-    # extradata = {'external_id': pd.NA}
-    # data = data_generator(extradata)
-    # assert checking(data) == 1
+    # если екстернал не равен 18 символов
+    extrdata = {'external_id': 1556, 'складское действие': 'другой'}
+    data = data_generator(extrdata)
+    assert checking(data) == '[Ручной разбор]'
 
     #склад соответствует
     # ВВП НЕТ

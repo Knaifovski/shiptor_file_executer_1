@@ -153,13 +153,13 @@ def checking_second(data: pd.DataFrame):
                     comment.append(check_vvp_ishave(data, i, easyreturn=True))
                 else:
                     wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
-                    # external_id пустой, название товара или RP
-                    if len(str(data['external_id'][i]))!=18:
+                    if len(str(data['external_id'][i])) != 18 and wh_prefix_not_equal:
                         comment.append("[Ручной разбор]")
                     else:
-                        status_check = check_status_returned(data, i)
-                        if status_check:
-                            # comment.append(status_check) Не добавляем статус в коммент
+                        is_returned = check_status_isreturned(data, i)
+                        if is_returned:
+                            if wh_prefix_not_equal:
+                                comment.append(wh_prefix_not_equal)
                             if wh_prefix_not_equal:
                                 comment.append(wh_prefix_not_equal)
                             else:
@@ -193,7 +193,7 @@ def check_merchant(data, i):
 
 @log
 def check_warehouse_prefix_not_equal(data, i):
-    comment = None
+    comment = False
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
         try:
             logger.debug(f"{str(int(data['external_id'][i]))[0:5]}")
@@ -214,7 +214,7 @@ def check_status_delivered(data, i):
     return comment
 
 @log
-def check_status_returned(data, i):
+def check_status_isreturned(data, i):
     comment = None
     if data['shiptor_status'][i] in ('returned', 'return_to_sender'):
         comment = f"[СТАТУС] {data['shiptor_status'][i]}"
