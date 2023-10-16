@@ -122,6 +122,7 @@ def checking_first(data: list, request_warehouse=None):
 @log
 def checking_second(data: pd.DataFrame):
     data = data.to_dict()
+    logger.debug(data)
     i = 0 #index курсор
     for package in data['value']:
         # comment = str(data['comment'][i]).split(',')
@@ -130,10 +131,11 @@ def checking_second(data: pd.DataFrame):
             # посылка не создана в шипторе
             #SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
             comment.append("[SHIPTOR] Посылка не создана в shiptor")
-            if 'Дата ОМ' not in data.keys() or pd.isna(data['Дата ОМ'][i]):
-                comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
-            else:
-                comment.append(check_vvp_ishave(data, i))
+            if 'Дата ОМ' in data.keys():
+                if not pd.isna(data['Дата ОМ'][i]):
+                    comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
+                else:
+                    comment.append(check_vvp_ishave(data, i))
         else:
             # посылка создана в шипторое
             is_not_smm = check_project_is_not_smm(data, i)
@@ -152,7 +154,7 @@ def checking_second(data: pd.DataFrame):
                 else:
                     wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
                     # external_id пустой, название товара или RP
-                    if wh_prefix_not_equal is None and len(data['external_id'][i])!=18:
+                    if wh_prefix_not_equal is None and len(str(data['external_id'][i]))!=18:
                         comment.append("[Ручной разбор]")
                     else:
                         status_check = check_status_returned(data, i)
@@ -198,8 +200,8 @@ def check_warehouse_prefix_not_equal(data, i):
             warehouse_data = settings.SAP_WAREHOUSES[str(int(data['external_id'][i]))[0:5]]
             if data['request_warehouse'][i] != warehouse_data['prefix']:
                 comment = f"[СКЛАД] Засыл, передать в {warehouse_data['shiptor_wh_name']}"
-        except KeyError as e:
-            comment = f"[APP] Не найдено склада SAP с значением {e.args}"
+        except Exception as e:
+            comment = f"[APP] Не найдено склада SAP с значением {data['external_id'][i]}"
     return comment
 
 @log
@@ -243,6 +245,7 @@ def check_project_is_not_smm(data: dict, i: int):
 def check_vvp_ishave(data: dict, i: int, easyreturn=False):
     # SKRIPTDLYAOBRAB-33: Проверка. Есть ВВП
     comment = None
+    # Если ВВП НЕТ
     if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT or pd.isna(data['кол-во ВВП'][i]):
         if easyreturn:
             comment = f"[СММ - ВВП ЛВ] RP{int(data['id'][i])}-{data['external_id'][i]}"
@@ -250,7 +253,8 @@ def check_vvp_ishave(data: dict, i: int, easyreturn=False):
             if 'Номер отправления' in data.keys() and not pd.isna(data['Номер отправления'][i]):
                 comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}-{int(data['Номер отправления'][i])}"
             else:
-                comment = "[СММ - ВВП ФФ] external_id + номер заказа (значения не переданы)"
+                comment = f"[СММ - ВВП ФФ] {data['external_id'][i]} - номер заказа (значения не переданы)"
+    # Если ВВП ЕСТЬ
     else:
         comment = check_vvp_unique(data, i)
     return comment
@@ -260,10 +264,14 @@ def check_vvp_unique(data: dict, i: int):
     """Проверка уникальности ВВП"""
     # SKRIPTDLYAOBRAB-34: Проверка. ВВП уникально
     comment = None
-    if not pd.isna(data['кол-во ВВП'][i]) and data['кол-во ВВП'][i] != 1:
+    if not pd.isna(data['кол-во ВВП'][i]) and int(data['кол-во ВВП'][i]) != 1:
         comment = "[SAP] Несколько ВВП - удалить дубль"
     else:
-        comment = check_vvp_status(data, i)
+        vvp_status = check_vvp_status(data, i)
+        if vvp_status:
+            comment = vvp_status
+        else:
+            comment = 'ВВП уникально'
     return comment
 
 @log
