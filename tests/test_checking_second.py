@@ -40,7 +40,7 @@ class TestCase_1:
         assert file_handle.check_warehouse_prefix_not_equal(self.data, i=0) != None
 
     def test_check_status_delivered(self):
-        assert file_handle.check_status_delivered(self.data, i=0) == f"[СКЛАД-НА ВОЗВРАТ] передать на сортировку"
+        assert file_handle.check_status_delivered(self.data, i=0) == f"[СКЛАД-НЕ ВОЗВРАТ] передать на сортировку"
 
     def test_check_status_returned(self):
         assert file_handle.check_status_isreturned(self.data, i=0) != None
@@ -111,41 +111,7 @@ class TestCase_with_VVP_notunique():
 
 
 def checking(data: dict, idx = 0):
-    i = idx
-    comment = []
-    for package in data['value']:
-        if data['id'][i] is pd.NA or pd.isna(data['external_id'][i]):
-            # посылка не создана в шипторе
-            # SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
-            comment.append("[SHIPTOR] Посылка не создана в shiptor")
-            if 'Дата ОМ' in data.keys():
-                if pd.isna(data['Дата ОМ'][i]):
-                    comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
-                else:
-                    comment.append(file_handle.check_vvp_ishave(data, i))
-        else:
-            # посылка создана в шипторое
-            is_not_smm = file_handle.check_project_is_not_smm(data, i)
-            if is_not_smm:
-                comment.append(is_not_smm)
-            else:
-                is_merchant = file_handle.check_merchant(data, i)
-                easyreturn = file_handle.check_iseasyreturn(data, i)
-                if easyreturn:
-                    comment.append(file_handle.check_vvp_ishave(data, i, easyreturn=True))
-                else:
-                    wh_prefix_not_equal = file_handle.check_warehouse_prefix_not_equal(data, i)
-                    if len(str(data['external_id'][i])) != 18 and wh_prefix_not_equal:
-                        comment.append("[Ручной разбор]")
-                    else:
-                        is_returned = file_handle.check_status_isreturned(data, i)
-                        if is_returned:
-                            if wh_prefix_not_equal:
-                                comment.append(wh_prefix_not_equal)
-                            else:
-                                comment.append(file_handle.check_vvp_ishave(data, i))
-                        else:
-                            comment.append(file_handle.check_status_delivered(data, i))
+    comment = file_handle.full_checking(data,idx)
     return ",".join(comment)
 
 def data_generator(extradata: dict):
@@ -229,14 +195,17 @@ def test_4_easy_return():
     assert checking(data) == '[СКЛАД] ВВП создано - проверьте актуальность'
 
 def test_5_not_found_in_shiptor():
+    extrdata = {'id': pd.NA, 'складское действие': 'другой'}
+    data = data_generator(extrdata)
+    assert checking(data) == "[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК"
     extrdata = {'id': pd.NA, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor'
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
     # ом не проведено
     extrdata = {'id': pd.NA, 'Дата ОМ': pd.NA, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
-    # ом не проведено
+    # ом проведено
     extrdata = {'id': pd.NA, 'Дата ОМ': 1, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
@@ -274,4 +243,41 @@ def test_6_left():
     # Статус другой
     extradata = {'shiptor_status': 'sent'}
     data = data_generator(extradata)
-    assert checking(data) == f"[СКЛАД-НА ВОЗВРАТ] передать на сортировку"
+    assert checking(data) == f"[СКЛАД-НЕ ВОЗВРАТ] передать на сортировку"
+
+def test_7():
+    # ом передано
+    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'Дата ОМ': 1}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
+    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф",
+                 'Дата ОМ': pd.Timestamp(year=2023,month=1,day=1)}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
+    # ом не передано
+    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+
+    #
+    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12,}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
+    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1, 'Дата ОМ': 1}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
+    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1, 'складское действие': "выфвыф",
+                 'Дата ОМ': pd.Timestamp(year=2023, month=1, day=1)}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
+    # ом не передано
+    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+

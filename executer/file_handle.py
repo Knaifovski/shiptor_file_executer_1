@@ -123,51 +123,52 @@ def checking_first(data: list, request_warehouse=None):
 def checking_second(data: pd.DataFrame):
     data = data.to_dict()
     logger.debug(data)
-    i = 0 #index курсор
+    idx = 0 #index курсор
     for package in data['value']:
-        # comment = str(data['comment'][i]).split(',')
-        comment = []
-        if data['id'][i] is pd.NA or pd.isna(data['external_id'][i]):
-            # посылка не создана в шипторе
-            #SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
-            comment.append("[SHIPTOR] Посылка не создана в shiptor")
-            if 'Дата ОМ' in data.keys():
-                if not pd.isna(data['Дата ОМ'][i]):
-                    comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
-                else:
-                    comment.append(check_vvp_ishave(data, i))
-        else:
-            # посылка создана в шипторое
-            is_not_smm = check_project_is_not_smm(data, i)
-            if is_not_smm:
-                comment.append(is_not_smm)
-            else:
-                is_merchant = check_merchant(data, i)
-                # if is_merchant:
-                #     comment.append(is_merchant)
-                # is_has_problem = check_problem(data, i)
-                # if is_has_problem:
-                #     comment.append(is_has_problem)
-                easyreturn = check_iseasyreturn(data, i)
-                if easyreturn:
-                    comment.append(check_vvp_ishave(data, i, easyreturn=True))
-                else:
-                    wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, i)
-                    if len(str(data['external_id'][i])) != 18 and wh_prefix_not_equal:
-                        comment.append("[Ручной разбор]")
-                    else:
-                        is_returned = check_status_isreturned(data, i)
-                        if is_returned:
-                            if wh_prefix_not_equal:
-                                comment.append(wh_prefix_not_equal)
-                            else:
-                                comment.append(check_vvp_ishave(data, i))
-                        else:
-                            comment.append(check_status_delivered(data, i))
-        print(comment)
-        data['comment'][i] = ",".join(comment)
-        i += 1
+        comment = full_checking(data, idx)
+        data['comment'][idx] = ",".join(comment)
+        idx += 1
     return pd.DataFrame(data)
+
+def full_checking(data: dict, idx):
+    comment = []
+    if data['id'][idx] is pd.NA:
+        # посылка не создана в шипторе
+        # SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
+        comment.append("[SHIPTOR] Посылка не создана в shiptor")
+        if ('Дата ОМ' in data.keys() and pd.isna(data['Дата ОМ'][idx])) or 'Дата ОМ' not in data.keys():
+            comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
+        else:
+            comment.append(check_vvp_ishave(data, idx))
+    else:
+        # посылка создана в шипторое
+        is_not_smm = check_project_is_not_smm(data, idx)
+        if is_not_smm:
+            comment.append(is_not_smm)
+        else:
+            is_merchant = check_merchant(data, idx)
+            # if is_merchant:
+            #     comment.append(is_merchant)
+            # is_has_problem = check_problem(data, idx)
+            # if is_has_problem:
+            #     comment.append(is_has_problem)
+            easyreturn = check_iseasyreturn(data, idx)
+            if easyreturn:
+                comment.append(check_vvp_ishave(data, idx, easyreturn=True))
+            else:
+                wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, idx)
+                if len(str(data['external_id'][idx])) != 18 and wh_prefix_not_equal:
+                    comment.append("[Ручной разбор]")
+                else:
+                    is_returned = check_status_isreturned(data, idx)
+                    if is_returned:
+                        if wh_prefix_not_equal:
+                            comment.append(wh_prefix_not_equal)
+                        else:
+                            comment.append(check_vvp_ishave(data, idx))
+                    else:
+                        comment.append(check_status_delivered(data, idx))
+    return comment
 
 @log
 def check_problem(data: dict, i: int):
@@ -208,7 +209,7 @@ def check_status_delivered(data, i):
     if data['shiptor_status'][i] in ('delivered'):
         comment = f"[СКЛАД] Принять не системно"
     else:
-        comment = f"[СКЛАД-НА ВОЗВРАТ] передать на сортировку"
+        comment = f"[СКЛАД-НЕ ВОЗВРАТ] передать на сортировку"
     return comment
 
 @log
