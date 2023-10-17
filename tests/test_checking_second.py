@@ -6,28 +6,29 @@ from executer import file_handle
 
 class TestCase_1:
     data = {
-    'value': {0: 'TEST_CASE_1'},
-    'id': {0: 556193482},
-    'external_id': {0: 586921800000004555},
-    'surrogate': {0: pd.NA},
-    'main': {0: 586921800000004555},
-    'method_id': {0: 482},
-    'method': {0: 'Сберкурьер'},
-    'shiptor_status': {0: 'return_to_sender'},
-    'delivered_at': {0: pd.NA},
-    'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
-    'return_id': {0: pd.NA},
-    'reception_warehouse_id': {0: pd.NA},
-    'project_id': {0: 101849},
-    'project': {0: 'Marketplace (ФК)'},
-    'previous_id': {0: pd.NA},
-    'warehouse_name': {0: 'Хабаровск'},
-    'comment': {0: pd.NA},
-    'request_warehouse': {0: 12357},
-    'result': {0: '586921800000004555'},
-    'SAP_WH': {0: 8000},
-    'Номер отправления': {0: pd.NA},
-    'Дата ОМ': {0: pd.NA}
+        'value': {0: 'TEST_CASE_1'},
+        'package_type': "standard",
+        'id': {0: 556193482},
+        'external_id': {0: 586921800000004555},
+        'surrogate': {0: pd.NA},
+        'main': {0: 586921800000004555},
+        'method_id': {0: 482},
+        'method': {0: 'Сберкурьер'},
+        'shiptor_status': {0: 'return_to_sender'},
+        'delivered_at': {0: pd.NA},
+        'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
+        'return_id': {0: pd.NA},
+        'reception_warehouse_id': {0: pd.NA},
+        'project_id': {0: 101849},
+        'project': {0: 'Marketplace (ФК)'},
+        'previous_id': {0: pd.NA},
+        'warehouse_name': {0: 'Хабаровск'},
+        'comment': {0: pd.NA},
+        'request_warehouse': {0: 12357},
+        'result': {0: '586921800000004555'},
+        'SAP_WH': {0: 8000},
+        'Номер отправления': {0: pd.NA},
+        'Дата ОМ': {0: pd.NA}
     }
 
     def test_external_id(self):
@@ -50,6 +51,7 @@ class TestCase_1:
 
     def test_check_project_is_not_smm(self):
         assert file_handle.check_project_is_not_smm(self.data, i=0) == None
+
     def test_check_vvp_ishave(self):
         assert file_handle.check_vvp_ishave(data=self.data, i=0, easyreturn=False) \
                == f"[СММ - ВВП ФФ] {self.data['external_id'][0]} - номер заказа (значения не переданы)"
@@ -57,33 +59,36 @@ class TestCase_1:
 
 class TestCase_with_VVP_uniq(TestCase_1):
     data = {
-    'value': {0: 'TEST_CASE_1'},
-    'id': {0: 556193482},
-    'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
-    'external_id': {0: 586921800000004555},
-    'method_id': {0: 482},
-    'shiptor_status': {0: 'return_to_sender'},
-    'delivered_at': {0: pd.NA},
-    'project_id': {0: 101849},
-    'warehouse_name': {0: 'Хабаровск'},
-    'comment': {0: pd.NA},
-    'request_warehouse': {0: 12357},
-    'result': {0: '586921800000004555'},
-    'SAP_WH': {0: 8000},
-    # VVP
-    'кол-во ВВП': {0: '1'},
-    'складское действие': {0: 'завершено'}, # 'завершено', 'завершено частично', else
-    # OM
-    'Номер отправления': {0: pd.NA},
-    'Дата ОМ': {0: pd.NA}
+        'value': {0: 'TEST_CASE_1'},
+        'package_type': "standard",
+        'id': {0: 556193482},
+        'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
+        'external_id': {0: 586921800000004555},
+        'method_id': {0: 482},
+        'shiptor_status': {0: 'return_to_sender'},
+        'delivered_at': {0: pd.NA},
+        'project_id': {0: 101849},
+        'warehouse_name': {0: 'Хабаровск'},
+        'comment': {0: pd.NA},
+        'request_warehouse': {0: 12357},
+        'result': {0: '586921800000004555'},
+        'SAP_WH': {0: 8000},
+        # VVP
+        'кол-во ВВП': {0: '1'},
+        'складское действие': {0: 'завершено'},  # 'завершено', 'завершено частично', else
+        # OM
+        'Номер отправления': {0: pd.NA},
+        'Дата ОМ': {0: pd.NA}
     }
 
     def test_check_vvp_ishave(self):
         assert file_handle.check_vvp_ishave(self.data, i=0) == "[СКЛАД] ВВП уже завершено"
 
+
 class TestCase_with_VVP_notunique():
     data = {
         'value': {0: 'TEST_CASE_1'},
+        'package_type': "standard",
         'id': {0: 556193482},
         'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
         'external_id': {0: 586921800000004555},
@@ -108,33 +113,33 @@ class TestCase_with_VVP_notunique():
         assert file_handle.check_vvp_ishave(self.data, i=0) == "[SAP] Несколько ВВП - удалить дубль"
 
 
-
-
-def checking(data: dict, idx = 0):
-    comment = file_handle.full_checking(data,idx)
+def checking(data: dict, idx=0):
+    comment = file_handle.full_checking(data, idx)
     return ",".join(comment)
+
 
 def data_generator(extradata: dict):
     data = {
-    'value': {0: 'TEST_CASE_1'},
-    'id': {0: 556193482},
-    'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
-    'external_id': {0: 586921800000004555},
-    'method_id': {0: 482},
-    'shiptor_status': {0: 'return_to_sender'},
-    'delivered_at': {0: pd.NA},
-    'project_id': {0: 101849},
-    'warehouse_name': {0: 'ФФ Артем'},
-    'comment': {0: pd.NA},
-    'request_warehouse': {0: 58692},
-    'result': {0: '586921800000004555'},
-    'SAP_WH': {0: 58692},
-    # VVP
-    # 'кол-во ВВП': {0: '1'},
-    # 'складское действие': {0: 'завершено'}, # 'завершено', 'завершено частично', else
-    # OM
-    # 'Номер отправления': {0: pd.NA},
-    # 'Дата ОМ': {0: pd.NA}
+        'value': {0: 'TEST_CASE_1'},
+        'package_type': "standard",
+        'id': {0: 556193482},
+        'returned_at': {0: pd.Timestamp('2023-03-01 01:02:49')},
+        'external_id': {0: 586921800000004555},
+        'method_id': {0: 482},
+        'shiptor_status': {0: 'return_to_sender'},
+        'delivered_at': {0: pd.NA},
+        'project_id': {0: 101849},
+        'warehouse_name': {0: 'ФФ Артем'},
+        'comment': {0: pd.NA},
+        'request_warehouse': {0: 58692},
+        'result': {0: '586921800000004555'},
+        'SAP_WH': {0: 58692},
+        # VVP
+        # 'кол-во ВВП': {0: '1'},
+        # 'складское действие': {0: 'завершено'}, # 'завершено', 'завершено частично', else
+        # OM
+        # 'Номер отправления': {0: pd.NA},
+        # 'Дата ОМ': {0: pd.NA}
     }
     for key, value in extradata.items():
         data[key] = {0: value}
@@ -146,10 +151,12 @@ def test_1():
     data = data_generator(extradata)
     assert checking(data) == '[СКЛАД] ВВП уже завершено'
 
+
 def test_is_smm():
     extradata = {'project_id': 101}
     data = data_generator(extradata)
     assert checking(data) == '[СКЛАД] Не СММ'
+
 
 def test_3():
     extrdata = {'external_id': "RP2221115354354355"}
@@ -167,6 +174,7 @@ def test_3():
     extrdata = {'external_id': "CCSR222111"}
     data = data_generator(extrdata)
     assert checking(data) == '[СММ - ВВП ЛВ] RP556193482-CCSR222111'
+
 
 def test_4_easy_return():
     # ввп не уникально
@@ -194,21 +202,27 @@ def test_4_easy_return():
     data = data_generator(extrdata)
     assert checking(data) == '[СКЛАД] ВВП создано - проверьте актуальность'
 
+
 def test_5_not_found_in_shiptor():
-    extrdata = {'id': pd.NA, 'складское действие': 'другой'}
+    extrdata = {'package_type': "standard",
+                'id': pd.NA, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == "[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК"
-    extrdata = {'id': pd.NA, 'кол-во ВВП': 1, 'складское действие': 'другой'}
+    extrdata = {'package_type': "standard",
+                'id': pd.NA, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
     # ом не проведено
-    extrdata = {'id': pd.NA, 'Дата ОМ': pd.NA, 'складское действие': 'другой'}
+    extrdata = {'package_type': "standard",
+                'id': pd.NA, 'Дата ОМ': pd.NA, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
     # ом проведено
-    extrdata = {'id': pd.NA, 'Дата ОМ': 1, 'кол-во ВВП': 1, 'складское действие': 'другой'}
+    extrdata = {'package_type': "standard",
+                'id': pd.NA, 'Дата ОМ': 1, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
+
 
 def test_6_left():
     # если екстернал не равен 18 символов
@@ -216,7 +230,7 @@ def test_6_left():
     data = data_generator(extrdata)
     assert checking(data) == '[Ручной разбор]'
 
-    #склад соответствует
+    # склад соответствует
     # ВВП НЕТ
     extradata = {'shiptor_status': 'return_to_sender'}
     data = data_generator(extradata)
@@ -245,39 +259,48 @@ def test_6_left():
     data = data_generator(extradata)
     assert checking(data) == f"[СКЛАД-НЕ ВОЗВРАТ] передать на сортировку"
 
+
 def test_7():
     # ом передано
-    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'Дата ОМ': 1}
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'Дата ОМ': 1}
     data = data_generator(extradata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
-    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф",
-                 'Дата ОМ': pd.Timestamp(year=2023,month=1,day=1)}
-    data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
-    # ом не передано
-    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1}
-    data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
-    extradata = {'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
-    data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
-
-    #
-    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12,}
-    data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
-    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1, 'Дата ОМ': 1}
-    data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
-    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1, 'складское действие': "выфвыф",
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф",
                  'Дата ОМ': pd.Timestamp(year=2023, month=1, day=1)}
     data = data_generator(extradata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
     # ом не передано
-    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1}
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1}
     data = data_generator(extradata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
-    extradata = {'id': pd.NA, 'external_id': "587000"+'0'*12, 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
     data = data_generator(extradata)
     assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
 
+    #
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "587000" + '0' * 12, }
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1, 'Дата ОМ': 1}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1, 'складское действие': "выфвыф",
+                 'Дата ОМ': pd.Timestamp(year=2023, month=1, day=1)}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
+    # ом не передано
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    extradata = {'package_type': "standard",
+                 'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
+    data = data_generator(extradata)
+    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'

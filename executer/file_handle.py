@@ -142,9 +142,14 @@ def full_checking(data: dict, idx):
             comment.append(check_vvp_ishave(data, idx))
     else:
         # посылка создана в шипторое
+        is_multiplace = check_ismultiplace(data,idx)
         is_not_smm = check_project_is_not_smm(data, idx)
+        if is_multiplace:
+            comment.append(is_multiplace)
         if is_not_smm:
             comment.append(is_not_smm)
+        if is_not_smm or is_multiplace:
+            pass
         else:
             is_merchant = check_merchant(data, idx)
             # if is_merchant:
@@ -168,6 +173,13 @@ def full_checking(data: dict, idx):
                             comment.append(check_vvp_ishave(data, idx))
                     else:
                         comment.append(check_status_delivered(data, idx))
+    return comment
+
+@log
+def check_ismultiplace(data: dict, i: int):
+    comment = None
+    if data['package_type'][i] == 'multiplace':
+        comment = "[Многоместка] Ручной разбор"
     return comment
 
 @log
