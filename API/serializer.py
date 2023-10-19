@@ -17,7 +17,7 @@ class MergeSerializer(serializers.Serializer):
     def validate(self, attrs):
         logger.debug(f"attrs = {attrs} keys={attrs.keys()}")
         if 'om' in attrs.keys():
-            attrs['om'] = self.text_to_dict(attrs['om'], fields=['result', 'Номер отправления', 'Дата ОМ'], name="ОМ")
+            attrs['om'] = self.text_to_dict(attrs['om'], fields=['Номер отправления', 'result', 'Дата ОМ'], name="ОМ")
         if 'vp' in attrs.keys():
             attrs['vp'] = self.text_to_dict(attrs['vp'], fields=['result', 'ВП'], name="ВП")
         if 'vvp' in attrs.keys():
