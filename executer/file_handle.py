@@ -77,7 +77,7 @@ def get_files_data(files: dict) -> dict:
 
     return {'result': result, 'extradata_dfs': extradata_dfs, 'simple': result_simple}
 
-
+@log
 def checking_first(data: list, request_warehouse=None):
     """Check packages from database data and add comments"""
     idx = 0
@@ -85,6 +85,7 @@ def checking_first(data: list, request_warehouse=None):
         logger.info(f"Package = {package}")
         comment = []
         package['request_warehouse'] = request_warehouse
+        package['SAP_WH'] = None
         if package['id'] is None:
             package['result'] = package['value']
             comment.append("Не найдено в Shiptor")
@@ -106,17 +107,12 @@ def checking_first(data: list, request_warehouse=None):
         except:
             package['SAP_WH'] = None
 
-
-
-
-        #if external_id contain "*" then its merchant
-        # if str(package['external_id']).__contains__('*'):
-        #     comment.append("Мерчант")
         if 'result' not in package.keys() or package['result'] is None:
             package['result'] = package['value']
         if len(comment) > 1:
             package['comment'] = ",".join(comment)
         idx += 1
+        logger.debug(package)
     return data
 
 @log
@@ -132,10 +128,10 @@ def checking_second(data: pd.DataFrame):
 
 def full_checking(data: dict, idx):
     comment = []
-    if data['id'][idx] is pd.NA:
+    if data['id'][idx] is pd.NA or (not data['id'][idx] is pd.NA and pd.isna(data['external_id'][idx])):
         # посылка не создана в шипторе
         # SKRIPTDLYAOBRAB-32: Проверка. ОМ проведен
-        comment.append("[SHIPTOR] Посылка не создана в shiptor")
+        # comment.append("[SHIPTOR] Посылка не создана в shiptor")
         if ('Дата ОМ' in data.keys() and pd.isna(data['Дата ОМ'][idx])) or 'Дата ОМ' not in data.keys():
             comment.append("[СКЛАД] Проверить ОМ\некорректный ШК")
         else:
@@ -173,6 +169,7 @@ def full_checking(data: dict, idx):
                             comment.append(check_vvp_ishave(data, idx))
                     else:
                         comment.append(check_status_delivered(data, idx))
+    logger.debug(comment)
     return comment
 
 @log
@@ -257,12 +254,12 @@ def check_vvp_ishave(data: dict, i: int, easyreturn=False):
     # SKRIPTDLYAOBRAB-33: Проверка. Есть ВВП
     comment = None
     # Если ВВП НЕТ
-    if 'кол-во ВВП' not in data.keys() or data['кол-во ВВП'][i] == pd.NaT or pd.isna(data['кол-во ВВП'][i]):
+    if 'кол-во ВВП' not in data.keys() or pd.isna(data['кол-во ВВП'][i]):
         if easyreturn:
             comment = f"[СММ - ВВП ЛВ] RP{int(data['id'][i])}-{data['external_id'][i]}"
         else:
             if 'Номер отправления' in data.keys() and not pd.isna(data['Номер отправления'][i]):
-                comment = f"[СММ - ВВП ФФ] {data['external_id'][i]}-{int(data['Номер отправления'][i])}"
+                comment = f"[СММ - ВВП ФФ] {data['result'][i]}-{int(data['Номер отправления'][i])}"
             else:
                 comment = f"[СММ - ВВП ФФ] {data['external_id'][i]} - номер заказа (значения не переданы)"
     # Если ВВП ЕСТЬ

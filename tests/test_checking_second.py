@@ -2,7 +2,15 @@ import pytest
 import pandas as pd
 
 from executer import file_handle
+from core.config import Settings
+from databases.databases import Standby_Shiptor_database
 
+
+settings = Settings()
+db = Standby_Shiptor_database(host=settings.shiptor_standby_base_host,
+                                   database='shiptor',
+                                   user=settings.user,
+                                   password=settings.password)
 
 class TestCase_1:
     data = {
@@ -207,21 +215,21 @@ def test_5_not_found_in_shiptor():
     extrdata = {'package_type': "standard",
                 'id': pd.NA, 'складское действие': 'другой'}
     data = data_generator(extrdata)
-    assert checking(data) == "[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК"
+    assert checking(data) == "[СКЛАД] Проверить ОМ\некорректный ШК"
     extrdata = {'package_type': "standard",
                 'id': pd.NA, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    assert checking(data) == '[СКЛАД] Проверить ОМ\некорректный ШК'
     # ом не проведено
     extrdata = {'package_type': "standard",
                 'id': pd.NA, 'Дата ОМ': pd.NA, 'складское действие': 'другой'}
     data = data_generator(extrdata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    assert checking(data) == '[СКЛАД] Проверить ОМ\некорректный ШК'
     # ом проведено
     extrdata = {'package_type': "standard",
                 'id': pd.NA, 'Дата ОМ': 1, 'кол-во ВВП': 1, 'складское действие': 'другой'}
     data = data_generator(extrdata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
+    assert checking(data) == '[СКЛАД] ВВП создано - проверьте актуальность'
 
 
 def test_6_left():
@@ -265,42 +273,55 @@ def test_7():
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'Дата ОМ': 1}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
+    assert checking(data) == 'ВВП уникально'
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф",
                  'Дата ОМ': pd.Timestamp(year=2023, month=1, day=1)}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
+    assert checking(data) == '[СКЛАД] ВВП создано - проверьте актуальность'
     # ом не передано
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    assert checking(data) == '[СКЛАД] Проверить ОМ\некорректный ШК'
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "RP1234567891234567", 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    assert checking(data) == '[СКЛАД] Проверить ОМ\некорректный ШК'
 
     #
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "587000" + '0' * 12, }
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    assert checking(data) == '[СКЛАД] Проверить ОМ\некорректный ШК'
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1, 'Дата ОМ': 1}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,ВВП уникально'
+    assert checking(data) == 'ВВП уникально'
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1, 'складское действие': "выфвыф",
                  'Дата ОМ': pd.Timestamp(year=2023, month=1, day=1)}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] ВВП создано - проверьте актуальность'
+    assert checking(data) == '[СКЛАД] ВВП создано - проверьте актуальность'
     # ом не передано
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    assert checking(data) == '[СКЛАД] Проверить ОМ\некорректный ШК'
     extradata = {'package_type': "standard",
                  'id': pd.NA, 'external_id': "587000" + '0' * 12, 'кол-во ВВП': 1, 'складское действие': "выфвыф"}
     data = data_generator(extradata)
-    assert checking(data) == '[SHIPTOR] Посылка не создана в shiptor,[СКЛАД] Проверить ОМ\некорректный ШК'
+    assert checking(data) == '[СКЛАД] Проверить ОМ\некорректный ШК'
+
+def test_8():
+    extradata = {'value': '587000100002071842', 'id': None, 'external_id': None, 'surrogate': None, 'main': None,
+            'method_id': None, 'method': None, 'shiptor_status': None, 'delivered_at': None,
+            'returned_at': None, 'return_id': None, 'reception_warehouse_id': None, 'project_id': None,
+            'project': None, 'previous_id': None, 'warehouse_name': None, 'package_type': None,
+            'comment': 'Not found in shiptor', 'request_warehouse': '12357', 'SAP_WH': None,
+            'result': '587000100002071842',
+                 'Номер отправления': 9611909222318, 'Дата ОМ': pd.Timestamp(year=2023,month=1,day=1), 'кол-во ОМ': 1,
+            'номер документа': 1048781397, 'складское действие': "не начато", 'кол-во ВВП': 1}
+    data = data_generator(extradata)
+    assert checking(data) == 1
+

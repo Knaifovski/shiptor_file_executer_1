@@ -47,7 +47,7 @@ class MergeSerializer(serializers.Serializer):
                 line = data[i]
                 for delimiter in delimiters:
                     line = ";".join(line.split(delimiter))
-                line = ";".join(line.split())
+                # line = ";".join(line.split())
                 line = line.split(";")
                 logger.debug(f"line = {line}, len = {len(line)}")
                 if len(line) < len(fields):
