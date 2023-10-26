@@ -169,12 +169,10 @@ def test_is_smm():
 def test_3():
     extrdata = {'external_id': "RP2221115354354355"}
     data = data_generator(extrdata)
-    print(checking(data))
-    print(f"[APP] Не найдено склада SAP с значением {data['external_id'][0]}")
-    assert checking(data) == f"[APP] Не найдено склада SAP с значением {data['external_id'][0]}"
+    assert checking(data) == f"[Ручной разбор] external"
     extrdata = {'external_id': "CRCCS2221100000001"}
     data = data_generator(extrdata)
-    assert checking(data) == f"[APP] Не найдено склада SAP с значением {data['external_id'][0]}"
+    assert checking(data) == f"[Ручной разбор] external"
     # Легкий возврат
     extrdata = {'external_id': "R222111"}
     data = data_generator(extrdata)
@@ -234,9 +232,9 @@ def test_5_not_found_in_shiptor():
 
 def test_6_left():
     # если екстернал не равен 18 символов
-    extrdata = {'external_id': 1556, 'складское действие': 'другой'}
+    extrdata = {'external_id': "1556"+"1"*14, 'складское действие': 'другой'}
     data = data_generator(extrdata)
-    assert checking(data) == '[Ручной разбор]'
+    assert checking(data) == '[Ручной разбор] external'
 
     # склад соответствует
     # ВВП НЕТ
@@ -256,7 +254,7 @@ def test_6_left():
     # склад не соответствует
     extradata = {'shiptor_status': 'return_to_sender', 'request_warehouse': "9999999"}
     data = data_generator(extradata)
-    assert checking(data).startswith(f"[СКЛАД] Засыл, передать")
+    assert checking(data).startswith(f"[Ручной разбор] external")
 
     # Статус доставлено
     extradata = {'shiptor_status': 'delivered'}
@@ -323,5 +321,13 @@ def test_8():
                  'Номер отправления': 9611909222318, 'Дата ОМ': pd.Timestamp(year=2023,month=1,day=1), 'кол-во ОМ': 1,
             'номер документа': 1048781397, 'складское действие': "не начато", 'кол-во ВВП': 1}
     data = data_generator(extradata)
-    assert checking(data) == 1
+    assert checking(data) == "[СКЛАД] ВВП создано - проверьте актуальность"
+
+
+def test_9():
+    extradata = {'external_id': "59595*9746354396595*1"}
+    data = data_generator(extradata)
+    if len(str(data['external_id'][0])) != 18 and file_handle.check_warehouse_prefix_not_equal(data, 0):
+        print('sss')
+    # assert checking(data) == ""
 

@@ -158,9 +158,10 @@ def full_checking(data: dict, idx):
                 comment.append(check_vvp_ishave(data, idx, easyreturn=True))
             else:
                 wh_prefix_not_equal = check_warehouse_prefix_not_equal(data, idx)
-                if len(str(data['external_id'][idx])) != 18 and wh_prefix_not_equal:
-                    comment.append("[Ручной разбор]")
-                else:
+                logger.debug(f"Количество символов external_id = {len(str(data['external_id'][idx]))}")
+                logger.debug(f"префикс склада = {wh_prefix_not_equal}")
+                logger.debug(f"Условие выполняется? {len(str(data['external_id'][idx])) == 18 and wh_prefix_not_equal == None}")
+                if len(str(data['external_id'][idx])) == 18 and wh_prefix_not_equal == None:
                     is_returned = check_status_isreturned(data, idx)
                     if is_returned:
                         if wh_prefix_not_equal:
@@ -169,6 +170,8 @@ def full_checking(data: dict, idx):
                             comment.append(check_vvp_ishave(data, idx))
                     else:
                         comment.append(check_status_delivered(data, idx))
+                else:
+                    comment.append("[Ручной разбор] external")
     logger.debug(comment)
     return comment
 
@@ -201,7 +204,7 @@ def check_merchant(data, i):
 
 @log
 def check_warehouse_prefix_not_equal(data, i):
-    comment = False
+    comment = None
     if not pd.isna(data['SAP_WH'][i]) and not pd.isna(data['warehouse_name'][i]):
         try:
             logger.debug(f"{str(int(data['external_id'][i]))[0:5]}")
@@ -234,12 +237,6 @@ def check_iseasyreturn(data: dict, i: int):
     if (str(data['external_id'][i])[0:2] != "RP") and (str(data['external_id'][i]).startswith(('R', "CCS"))):
         comment = "Легкий возврат"
     return comment
-
-@log
-def check_easy_external(data: dict, i:int):
-    comment = None
-    if (len(data['external_id'][i])==18):
-        pass
 
 @log
 def check_project_is_not_smm(data: dict, i: int):
